@@ -68,7 +68,8 @@ h2{font-size:1.9rem;font-weight:700;margin:1.8rem 0 .8rem;display:flex;align-ite
 .event .ttl{font-size:1.6rem;flex:1}
 .poster{flex:0 0 calc((100% - 8.4rem) / 7);min-width:0;height:21rem;position:relative;background-size:cover;background-position:center;display:flex;align-items:flex-end}
 .poster .cap{width:100%;padding:3rem .9rem .8rem;background:linear-gradient(transparent,rgba(0,0,0,.88));font-size:1.35rem;font-weight:700;line-height:1.15}
-.poster .badge{position:absolute;top:.7rem;left:.7rem;font-size:1rem}
+.poster .bgs{position:absolute;top:.7rem;left:.7rem;right:.7rem;display:flex;flex-wrap:wrap;gap:.3rem}
+.poster .bgs .badge{font-size:1rem}
 .game{flex:0 0 calc((100% - 4.2rem) / 4);min-width:0;height:15rem;padding:1.1rem 1.4rem;display:flex;flex-direction:column;gap:.5rem}
 .game.big{flex:none;width:auto;height:15.5rem}
 .team{display:flex;justify-content:space-between;font-size:1.6rem;font-weight:700}
@@ -252,9 +253,10 @@ const DEFAULTS = {
   side:0,       // side margin step
   margin: NATIVE ? 0 : 2,     // bottom safe margin step (Silk's toolbar covers the bottom of the page; the native app has no toolbar)
   scale:2,      // text size step (2 = Large, +10%)
-  v:3,
+  showToday:false,   // home row: 'New episodes today'
+  v:4,
 };
-let S = (() => { try { const saved = JSON.parse(localStorage.getItem(KEY) || '{}'), x = { ...DEFAULTS, ...saved }; if (!saved.v || saved.v < 2) x.scale = 2; if (!saved.v || saved.v < 3) { x.services = [...new Set([...(saved.services || DEFAULTS.services), 'prime', 'cable'])]; } x.v = 3; return x; } catch (e) { return { ...DEFAULTS }; } })();
+let S = (() => { try { const saved = JSON.parse(localStorage.getItem(KEY) || '{}'), x = { ...DEFAULTS, ...saved }; if (!saved.v || saved.v < 2) x.scale = 2; if (!saved.v || saved.v < 3) { x.services = [...new Set([...(saved.services || DEFAULTS.services), 'prime', 'cable'])]; } if (!saved.v || saved.v < 4) x.showToday = false; x.v = 4; return x; } catch (e) { return { ...DEFAULTS }; } })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const SIDES = [2.5, 4.5, 6.5], MARGINS = [0, 4, 8, 12], SCALES = [[.85, 'Small'], [1, 'Normal'], [1.1, 'Large'], [1.2, 'Larger'], [1.3, 'Extra large']];
 function applyDisplay() {
@@ -480,8 +482,8 @@ function closeModal() {
   modalOpen = false; $('#modal').classList.remove('open');
   if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll:true });
 }
-const showDetail = sh => openDetail({ title:sh.title, sub:`${sh.type}${sh.year ? ' · ' + sh.year : ''}${sh.rating ? ' · ★ ' + sh.rating : ''}`, overview:sh.overview, chips:[badge(SVC[sh.service])],
-  options:[{ svc:SVC[sh.service], owned:owned(sh.service) }] });
+const showDetail = sh => openDetail({ title:sh.title, sub:`${sh.type}${sh.year ? ' · ' + sh.year : ''}${sh.rating ? ' · ★ ' + sh.rating : ''}`, overview:sh.overview, chips:svcsOf(sh).map(id => badge(SVC[id])),
+  options:svcsOf(sh).map(id => ({ svc:SVC[id], owned:owned(id) })) });
 const eventDetail = ev => {
   openDetail({ title:ev.title, sub:`${fmtT(ev.start)} – ${fmtT(ev.end)} · ${ev.sub || ''}`, overview:ev.overview,
     chips:[evChip(ev)], options:[{ svc:SVC[ev.service], owned:owned(ev.service) }] }); };
@@ -496,8 +498,13 @@ const eventCard = ev => {
   return F('div', { class:'card event', onclick:() => eventDetail(ev) },
     h('div', { class:'row' }, evChip(ev), badge(SVC[ev.service])),
     h('div', { class:'ttl' }, ev.title), h('div', { class:'sub' }, ev.sub)); };
+const svcsOf = sh => sh.services || [sh.service];
+const dedupe = list => { const m = new Map();      // the same title on several of your services becomes one card
+  for (const x of list) { const k = x.type + '|' + String(x.title).toLowerCase(), e = m.get(k);
+    if (e) { if (!e.services.includes(x.service)) e.services.push(x.service); e.pop = Math.max(e.pop || 0, x.pop || 0); } else m.set(k, { ...x, services:[x.service] }); }
+  return [...m.values()]; };
 const showCard = sh => F('div', { class:'card poster', style:`background-image:${sh.poster ? `url(${sh.poster}),` : ''}${grad(sh.title)}`, onclick:() => showDetail(sh) },
-  badge(SVC[sh.service]), h('div', { class:'cap' }, sh.title));
+  h('div', { class:'bgs' }, svcsOf(sh).map(id => badge(SVC[id]))), h('div', { class:'cap' }, sh.title));
 function gameCard(g, big) {
   const o = watchOptions(g), mine = o.find(x => x.owned);
   const win = g.state === 'post' && g.home.score !== g.away.score ? (g.home.score > g.away.score ? 'home' : 'away') : null;
@@ -520,7 +527,7 @@ const screens = {
     const hero = evs[0];
     const games = [...D.games].filter(gameOk).sort((a, b) => (b.state === 'in') - (a.state === 'in') || (b.tags && b.tags.includes('top25')) - (a.tags && a.tags.includes('top25')) || a.start - b.start).slice(0, 8);
     const svcs = SERVICES.filter(s => owned(s.id) && D.shows.some(x => x.service === s.id));
-    const todayL = (D.today || []).filter(x => owned(x.service)).slice(0, 14), freshL = (D.fresh || []).filter(x => owned(x.service)).slice(0, 14);
+    const todayL = S.showToday ? dedupe((D.today || []).filter(x => owned(x.service))).slice(0, 14) : [], freshL = dedupe((D.fresh || []).filter(x => owned(x.service))).slice(0, 14);
     return h('div', null,
       hero ? F('div', { class:'hero', style:`--herobg:${grad(hero.title)}`, onclick:() => eventDetail(hero) },
         h('div', { class:'row', style:'justify-content:flex-start' }, hero.start <= now ? h('span', { class:'chip ' + (hero.kind === 'live' ? 'live' : 'new') }, hero.kind === 'live' ? 'LIVE NOW' : 'NEW TODAY') : h('span', { class:'chip' }, 'UP NEXT ' + fmtT(hero.start)), badge(SVC[hero.service])),
@@ -559,7 +566,7 @@ const screens = {
       const have = SERVICES.filter(x => owned(x.id) && D.shows.some(y => y.service === x.id)), opts = ['all', ...have.map(x => x.id)];
       if (!opts.includes(filter)) filter = 'all';
       chips.replaceChildren(...opts.map(id => F('div', { class:'chip' + (filter === id ? ' on' : ''), onclick:() => { filter = id; draw(); chips.children[opts.indexOf(id)].focus(); } }, id === 'all' ? 'All services' : SVC[id].name)));
-      const list = D.shows.filter(x => owned(x.service) && (filter === 'all' || x.service === filter)).sort((a, b) => (b.pop || 0) - (a.pop || 0)).slice(0, 42);
+      const list = dedupe(D.shows.filter(x => owned(x.service) && (filter === 'all' || x.service === filter))).sort((a, b) => (b.pop || 0) - (a.pop || 0)).slice(0, 42);
       grid.replaceChildren(...(list.length ? list.map(sh => { const c = showCard(sh); c.classList.add('in-grid'); return c; }) : [h('div', { class:'note' }, 'Nothing to show. Turn on a streaming service in Settings.')]));
     };
     draw();
@@ -602,6 +609,7 @@ const screens = {
       sec('Display', [cycle('Side margin', () => S.side, ['Small', 'Medium', 'Large'], v => S.side = v), cycle('Bottom margin', () => S.margin, ['None', 'Small', 'Medium', 'Large'], v => S.margin = v), cycle('Text size', () => S.scale, SCALES.map(x => x[1]), v => S.scale = v)],
         'Press OK on a button to step through the options. If the bottom of the screen is cut off, raise the bottom margin until the hint bar is fully visible. If the left or right edge is cut off by your TV, raise the side margin.'),
       sec('TMDB key (for TV shows)', [keyBox()], getKey() ? 'A key is saved on this device. To change it, select the box, type the new key, and press Done.' : 'Shows need a free TMDB key. Select the box, type or paste your TMDB API key (the long one, 32 characters), and press Done. It stays on this device only.'),
+      sec('Home screen', [toggle('Show "New episodes today" row', () => S.showToday, () => { S.showToday = !S.showToday; })], 'Off by default. The "New on your services" and "Popular on ..." rows stay.'),
       sec('My subscriptions', SERVICES.map(s => toggle(s.name, list('services', s.id), flip('services', s.id))), 'The guide, home screen and "watch on" labels adapt to whatever is checked here.'),
       sec('Sports leagues', LEAGUES.map(l => toggle(l.name, list('leagues', l.id), flip('leagues', l.id)))),
       owned('cable') ? sec('Live TV channels', CHANNELS.map(([id, n]) => toggle(n, list('channels', id), flip('channels', id))), 'Check the channels your Spectrum or Cox package includes. Games on these channels show up as watchable, next to any streaming option.') : null,
