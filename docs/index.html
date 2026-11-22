@@ -363,7 +363,7 @@ async function liveShows() {
       soft(base('tv', s) + `&first_air_date.gte=${since}`), soft(base('movie', s) + `&primary_release_date.gte=${since}&primary_release_date.lte=${today}`),
       soft(base('tv', s) + `&air_date.gte=${today}&air_date.lte=${today}`) ]);
     const pick = (a, t, n) => (a.results || []).slice(0, n).map(x => map(x, t, s));
-    out.shows.push(...[...pick(tv, 'Series', 8), ...pick(mv, 'Movie', 8)].sort((a, b) => b.pop - a.pop).slice(0, 12));
+    out.shows.push(...pick(tv, 'Series', 10), ...pick(mv, 'Movie', 10));
     out.fresh.push(...[...pick(ntv, 'Series', 6), ...pick(nmv, 'Movie', 6)]);
     out.today.push(...pick(air, 'Series', 5));
   });
@@ -527,18 +527,20 @@ const screens = {
     const hero = evs[0];
     const games = [...D.games].filter(gameOk).sort((a, b) => (b.state === 'in') - (a.state === 'in') || (b.tags && b.tags.includes('top25')) - (a.tags && a.tags.includes('top25')) || a.start - b.start).slice(0, 8);
     const svcs = SERVICES.filter(s => owned(s.id) && D.shows.some(x => x.service === s.id));
-    const todayL = S.showToday ? dedupe((D.today || []).filter(x => owned(x.service))).slice(0, 14) : [], freshL = dedupe((D.fresh || []).filter(x => owned(x.service))).slice(0, 14);
+    const todayL = S.showToday ? dedupe((D.today || []).filter(x => owned(x.service))).slice(0, 14) : [], freshL = dedupe((D.fresh || []).filter(x => owned(x.service))).slice(0, 14),
+      movieL = dedupe(D.shows.filter(x => x.type === 'Movie' && owned(x.service))).sort((a, b) => (b.pop || 0) - (a.pop || 0)).slice(0, 14);
     return h('div', null,
       hero ? F('div', { class:'hero', style:`--herobg:${grad(hero.title)}`, onclick:() => eventDetail(hero) },
         h('div', { class:'row', style:'justify-content:flex-start' }, hero.start <= now ? h('span', { class:'chip ' + (hero.kind === 'live' ? 'live' : 'new') }, hero.kind === 'live' ? 'LIVE NOW' : 'NEW TODAY') : h('span', { class:'chip' }, 'UP NEXT ' + fmtT(hero.start)), badge(SVC[hero.service])),
         h('div', { class:'ttl' }, hero.title), h('div', { class:'sub' }, hero.sub)) : null,
       evs.length > 1 ? rail('Live & starting soon', evs.slice(1, 9).map(eventCard), mark('guide')) : null,
       todayL.length ? rail('New episodes today', todayL.map(showCard), mark('shows')) : null,
+      movieL.length ? rail('Popular movies on your services', movieL.map(showCard), mark('shows')) : null,
       freshL.length ? rail('New on your services', freshL.map(showCard), mark('shows')) : null,
       games.length ? rail('Scores & games', games.map(g => gameCard(g)), mark('sports')) : null,
       svcs.map(s => rail('Popular on ' + s.name, D.shows.filter(x => x.service === s.id).slice(0, 10).map(showCard), mark('shows'))),
       D.news.length ? rail('Headlines', D.news.slice(0, 8).map(newsCard), mark('news')) : null,
-      (!D.loading && !hero && !todayL.length && !freshL.length && !games.length && !svcs.length && !D.news.length) ? h('div', { class:'note', style:'margin-top:2rem' }, 'Nothing to show yet. Open Settings, then Data status, to see what could not be loaded.') : null,
+      (!D.loading && !hero && !todayL.length && !freshL.length && !movieL.length && !games.length && !svcs.length && !D.news.length) ? h('div', { class:'note', style:'margin-top:2rem' }, 'Nothing to show yet. Open Settings, then Data status, to see what could not be loaded.') : null,
       D.loading ? h('div', { class:'note', style:'margin-top:2rem' }, 'Loading your guide...') : null);
   },
   guide() {
