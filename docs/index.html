@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OneGuide</title>
+<style>
+:root{
+  --bg:#080b12; --panel:#111827; --panel2:#18223a; --line:#26324d;
+  --text:#f1f4fb; --dim:#9aa7c2; --accent:#ffb224; --live:#ff4a5c; --ok:#39d98a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+/* Design unit: 1rem = 16px on a 1920px-wide screen, scales to any TV viewport */
+html{font-size:.8333vw}
+body{height:100vh;overflow:hidden;color:var(--text);
+  font-family:"Amazon Ember","Roboto","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  background:radial-gradient(90rem 50rem at 85% -15%,#1b2a52 0%,transparent 60%),
+             radial-gradient(60rem 40rem at -10% 110%,#2a1a3f 0%,transparent 55%),var(--bg);}
+#app{height:100vh;display:flex;flex-direction:column;padding:0 var(--safe-x,2.5rem) var(--safe-b,0)}
+header{height:7.5rem;flex:0 0 auto;display:flex;align-items:center;gap:3.5rem}
+.brand{font-size:2.3rem;font-weight:800;letter-spacing:.01em}
+.brand b{color:var(--accent)}
+nav{display:flex;gap:.6rem}
+.tab{font-size:1.65rem;padding:.7rem 1.7rem;border-radius:99rem;color:var(--dim);cursor:pointer}
+.tab.active{background:var(--panel2);color:var(--text)}
+.spacer{flex:1}
+.clock{text-align:right;line-height:1.2}
+.clock .t{font-size:2rem;font-weight:700}
+.clock .w{font-size:1.3rem;color:var(--dim)}
+#main{flex:1 1 auto;min-height:0;overflow:hidden;margin:0 -1.6vw;padding:.5rem 1.6vw 0}
+#hints{flex:0 0 auto;height:3.6rem;display:flex;gap:2.5rem;align-items:center;color:var(--dim);font-size:1.2rem}
+#hints b{color:var(--text);font-weight:600}
+
+/* Focus */
+.f{outline:none;cursor:pointer;scroll-margin:3rem 12rem 4rem 12rem;transition:transform .12s ease,box-shadow .12s ease}
+.f:focus{box-shadow:0 0 0 .28rem var(--accent),0 1.2rem 3rem rgba(0,0,0,.55);transform:scale(1.035);z-index:5;position:relative}
+.tab.f:focus{box-shadow:0 0 0 .22rem var(--accent);transform:none}
+.block.f{scroll-margin-left:18rem}
+.block.f:focus,.chip.f:focus,.toggle.f:focus{transform:none}
+
+/* Common bits */
+h1{font-size:2.6rem;font-weight:800;margin:1rem 0 .3rem}
+h2{font-size:1.9rem;font-weight:700;margin:1.8rem 0 .8rem;display:flex;align-items:baseline;gap:1rem}
+.hint{font-size:1.2rem;font-weight:500;color:var(--dim)}
+.tag{font-size:1.05rem;font-weight:700;letter-spacing:.08em;padding:.2rem .6rem;border-radius:.4rem;border:.1rem solid var(--line);color:var(--dim);vertical-align:middle}
+.tag.live{color:var(--ok);border-color:var(--ok)}
+.badge{display:inline-block;font-size:1.15rem;font-weight:700;padding:.25rem .7rem;border-radius:.5rem;white-space:nowrap}
+.badge.plain{background:var(--panel2);color:var(--text)}
+.chip{display:inline-block;font-size:1.15rem;font-weight:700;padding:.25rem .7rem;border-radius:.5rem;background:var(--panel2);color:var(--text)}
+.chip.live{background:var(--live);color:#fff}
+.chip.new{background:var(--accent);color:#1a1200}
+.chip.ok{background:rgba(57,217,138,.18);color:var(--ok)}
+.chip.done{color:var(--dim)}
+.track{display:flex;gap:1.4rem;overflow:hidden;padding:1rem 1rem 1.6rem 1.6rem;margin:0 -1rem 0 -1.6rem}
+.card{flex:0 0 auto;border-radius:1.1rem;background:var(--panel);border:.1rem solid var(--line);overflow:hidden}
+.row{display:flex;align-items:center;justify-content:space-between;gap:.8rem}
+.ttl{font-size:1.65rem;font-weight:700;line-height:1.2}
+.sub{font-size:1.3rem;color:var(--dim)}
+
+/* Hero */
+.hero{display:flex;flex-direction:column;justify-content:flex-end;gap:.5rem;height:11.5rem;padding:1.3rem 2.5rem;border-radius:1.4rem;
+  background:linear-gradient(110deg,rgba(8,11,18,.92) 15%,rgba(8,11,18,.25)),var(--herobg);border:.1rem solid var(--line)}
+.hero .ttl{font-size:2.5rem}
+.hero .sub{font-size:1.35rem;color:#cfd8ee}
+
+/* Cards */
+.event{flex:0 0 calc((100% - 4.2rem) / 4);min-width:0;height:13.5rem;padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:.7rem}
+.event .ttl{font-size:1.6rem;flex:1}
+.poster{flex:0 0 calc((100% - 8.4rem) / 7);min-width:0;height:21rem;position:relative;background-size:cover;background-position:center;display:flex;align-items:flex-end}
+.poster .cap{width:100%;padding:3rem .9rem .8rem;background:linear-gradient(transparent,rgba(0,0,0,.88));font-size:1.35rem;font-weight:700;line-height:1.15}
+.poster .badge{position:absolute;top:.7rem;left:.7rem;font-size:1rem}
+.game{flex:0 0 calc((100% - 4.2rem) / 4);min-width:0;height:15rem;padding:1.1rem 1.4rem;display:flex;flex-direction:column;gap:.5rem}
+.game.big{flex:none;width:auto;height:15.5rem}
+.team{display:flex;justify-content:space-between;font-size:1.6rem;font-weight:700}
+.team.lose{color:var(--dim);font-weight:500}
+.team .sc{font-variant-numeric:tabular-nums}
+.watch{font-size:1.2rem;color:var(--dim);margin-top:auto}
+.watch b{color:var(--ok)}
+.headline{flex:0 0 calc((100% - 2.8rem) / 3);min-width:0;height:14rem;padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:.5rem}
+.headline .ttl{font-size:1.5rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Guide */
+.g-scroll{overflow:hidden;border-radius:1rem}
+.g-inner{position:relative;width:max-content}
+.g-row{display:flex;height:5.6rem;margin-bottom:.45rem}
+.g-time{height:3.2rem}
+.g-label{position:sticky;left:0;z-index:3;flex:0 0 16rem;display:flex;align-items:center;padding-left:.6rem;background:var(--bg)}
+.g-lane{position:relative;flex:0 0 auto}
+.g-tick{position:absolute;top:0;bottom:0;font-size:1.3rem;color:var(--dim);padding-left:.6rem;border-left:.1rem solid var(--line);display:flex;align-items:center}
+.block{position:absolute;top:0;bottom:0;padding:.6rem 1rem;border-radius:.8rem;background:var(--panel2);border:.1rem solid var(--line);overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:.15rem}
+.block .bt{font-size:1.4rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.block .bs{font-size:1.1rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.block.live{border-color:var(--live);background:linear-gradient(90deg,rgba(255,74,92,.22),var(--panel2))}
+.g-empty{position:absolute;inset:0;display:flex;align-items:center;padding-left:1rem;color:var(--dim);font-size:1.25rem;border:.1rem dashed var(--line);border-radius:.8rem}
+.nowline{position:absolute;top:0;bottom:0;width:.2rem;background:var(--live);z-index:2;pointer-events:none;box-shadow:0 0 .8rem var(--live)}
+.nowlabel{position:absolute;top:0;transform:translateX(-50%);background:var(--live);color:#fff;font-size:1rem;font-weight:700;padding:.05rem .5rem;border-radius:.3rem;z-index:2}
+
+/* Sports + filter chips */
+.chips{display:flex;gap:.7rem;flex-wrap:wrap;margin:.6rem 0 1rem}
+.chips .chip{font-size:1.3rem;padding:.5rem 1.2rem;border-radius:99rem;border:.1rem solid var(--line);background:var(--panel);color:var(--dim)}
+.chips .chip.on{background:var(--accent);color:#1a1200;border-color:var(--accent)}
+.grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:1.4rem;padding:.4rem 1rem 2rem;margin:0 -1rem}
+.poster.in-grid{flex:none;width:auto;min-width:0;height:24rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;padding:.4rem 1rem 2rem;margin:0 -1rem}
+
+/* News */
+.news{display:grid;grid-template-columns:52rem 1fr;gap:3rem}
+.nlist{display:flex;flex-direction:column;gap:.7rem;padding:.4rem 1rem 2rem;margin:0 -1rem}
+.nitem{padding:.9rem 1.2rem;border-radius:.9rem;background:var(--panel);border:.1rem solid var(--line)}
+.nitem .ttl{font-size:1.45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reader{padding:2rem 2.4rem;border-radius:1.2rem;background:var(--panel);border:.1rem solid var(--line);align-self:start;min-height:30rem}
+.reader .ttl{font-size:2.3rem;margin:.8rem 0 1rem}
+.reader p{font-size:1.5rem;line-height:1.5;color:#cfd8ee}
+
+/* Settings */
+.set-sec{margin-bottom:1.2rem}
+.toggles{display:flex;flex-wrap:wrap;gap:.9rem;padding:.4rem 1rem .6rem;margin:0 -1rem}
+.toggle{font-size:1.4rem;padding:.7rem 1.4rem;border-radius:.8rem;background:var(--panel);border:.1rem solid var(--line);min-width:15rem}
+.toggle.on{border-color:var(--ok);background:rgba(57,217,138,.12)}
+.keybox{font:inherit;font-size:1.4rem;color:var(--text,#fff);padding:.7rem 1.4rem;border-radius:.8rem;background:var(--panel);border:.1rem solid var(--line);min-width:34rem;width:34rem;outline:none}
+.keybox.f:focus{transform:none}
+.toggle .mk{display:inline-block;vertical-align:top;width:1.6rem;color:var(--ok);font-weight:800}
+.note{font-size:1.2rem;color:var(--dim);max-width:100rem;line-height:1.45}
+
+/* Modal + toast */
+#modal{position:fixed;inset:0;background:rgba(4,6,10,.82);display:none;align-items:center;justify-content:center;z-index:50}
+#modal.open{display:flex}
+.sheet{width:74rem;padding:2.6rem 3rem;border-radius:1.6rem;background:var(--panel);border:.1rem solid var(--line)}
+.sheet .ttl{font-size:2.8rem;margin:.6rem 0 .3rem}
+.sheet .ov{font-size:1.45rem;line-height:1.5;color:#cfd8ee;margin:1rem 0}
+.opt{display:flex;align-items:center;gap:1rem;font-size:1.3rem;margin:.5rem 0;color:var(--dim)}
+.opt.own .ownnote{color:var(--ok)}
+.tip{margin:1.2rem 0;padding:.9rem 1.2rem;border-radius:.8rem;background:var(--panel2);font-size:1.3rem;color:#cfd8ee}
+.btns{display:flex;gap:1rem;margin-top:1.4rem}
+.btn{font-size:1.5rem;font-weight:700;padding:.8rem 2rem;border-radius:.8rem;background:var(--panel2);color:var(--text);border:none;font-family:inherit}
+.btn.primary{background:var(--accent);color:#1a1200}
+#toast{position:fixed;left:50%;bottom:6rem;transform:translateX(-50%);background:#fff;color:#111;font-size:1.4rem;font-weight:600;padding:.9rem 1.6rem;border-radius:.8rem;display:none;z-index:60;max-width:80rem;text-align:center}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">One<b>Guide</b></div>
+    <nav id="nav"></nav>
+    <div class="spacer"></div>
+    <div class="clock"><div class="t" id="clk"></div><div class="w" id="wx"></div></div>
+  </header>
+  <div id="main"></div>
+  <div id="hints"><span><b>&#9664; &#9650; &#9660; &#9654;</b> move</span><span><b>OK</b> select</span><span><b>Back</b> return to menu</span><span class="spacer"></span><span id="datatag"></span></div>
+</div>
+<div id="modal" role="dialog" aria-modal="true"></div>
+<div id="toast"></div>
+
+<script>
+/* ================= CONFIG: edit these for your setup ================= */
+const CONFIG = {
+  // The TMDB key is NOT stored in this file (this page is public). Enter it once in Settings -> TMDB key; it is kept on this device only.
+  region: 'US',
+  rssProxy: 'https://api.rss2json.com/v1/api.json?rss_url=',   // browsers can't read most RSS directly; swap for your own proxy later
+  weather: { name: 'Front Royal, VA', lat: 38.9182, lon: -78.1945 },
+};
+/* ===================================================================== */
+
+(() => {
+'use strict';
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const h = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat(Infinity)) { if (k == null || k === false) continue; e.append(k.nodeType ? k : document.createTextNode(k)); }
+  return e;
+};
+const F = (tag, attrs, ...kids) => h(tag, { tabindex: '0', ...attrs, class: ('f ' + ((attrs && attrs.class) || '')).trim() }, ...kids);
+
+/* ---------- catalog ---------- */
+const SERVICES = [
+  { id:'netflix',  name:'Netflix',     color:'#e50914', tmdb:8 },
+  { id:'hulu',     name:'Hulu',        color:'#1ce783', tmdb:15,   dark:true },
+  { id:'max',      name:'Max',         color:'#5b3df5', tmdb:1899 },
+  { id:'disney',   name:'Disney+',     color:'#1b4fd8', tmdb:337 },
+  { id:'paramount',name:'Paramount+',  color:'#0a6cff', tmdb:531 },
+  { id:'peacock',  name:'Peacock',     color:'#f5c518', tmdb:386,  dark:true },
+  { id:'espnplus', name:'ESPN+',       color:'#e8334a' },
+  { id:'appletv',  name:'Apple TV+',   color:'#c9d1e0', tmdb:350,  dark:true },
+  { id:'prime',    name:'Prime Video', color:'#1fb6ff', tmdb:9,    dark:true },
+  { id:'espn',     name:'ESPN (live TV / Unlimited)', color:'#d0202f' },
+  { id:'cable',    name:'Spectrum / Cox', color:'#7a8bb0', app:'your Spectrum TV or Cox Contour app' },
+];
+const SVC = Object.fromEntries(SERVICES.map(s => [s.id, s]));
+// Live TV channels that come through a cable account (Spectrum / Cox). Names are the way ESPN reports the broadcaster.
+const CHANNELS = [['abc','ABC'],['cbs','CBS'],['nbc','NBC'],['fox','FOX'],['espn','ESPN'],['espn2','ESPN2'],['espnu','ESPNU'],['fs1','FS1'],['tnt','TNT'],['tbs','TBS'],
+  ['btn','Big Ten Network'],['secn','SEC Network'],['accn','ACC Network'],['cbssn','CBS Sports Network'],['nflnet','NFL Network']];
+const CH = Object.fromEntries(CHANNELS);
+const CH_BY_NAME = { 'abc':'abc','cbs':'cbs','nbc':'nbc','fox':'fox','espn':'espn','espn2':'espn2','espnu':'espnu','fs1':'fs1','fox sports 1':'fs1','tnt':'tnt','tbs':'tbs',
+  'big ten network':'btn','btn':'btn','sec network':'secn','acc network':'accn','cbs sports network':'cbssn','cbssn':'cbssn','nfl network':'nflnet' };
+const LEAGUES = [
+  { id:'nfl', name:'NFL', short:'NFL',               path:'football/nfl',                 mins:195 },
+  { id:'cfb', name:'College Football', short:'CFB',  path:'football/college-football',    mins:210 },
+  { id:'cbb', name:'College Basketball', short:'NCAAM',path:'basketball/mens-college-basketball', mins:125 },
+  { id:'nba', name:'NBA', short:'NBA',               path:'basketball/nba',               mins:150 },
+  { id:'mlb', name:'MLB', short:'MLB',               path:'baseball/mlb',                 mins:180 },
+  { id:'nhl', name:'NHL', short:'NHL',               path:'hockey/nhl',                   mins:150 },
+  { id:'mls', name:'MLS', short:'MLS',               path:'soccer/usa.1',                 mins:120 },
+  { id:'epl', name:'Premier League', short:'EPL',    path:'soccer/eng.1',                 mins:120 },
+];
+const LG = Object.fromEntries(LEAGUES.map(l => [l.id, l]));
+// college football filter: ESPN conference ids -> our tag
+const CFB_CONF = { '5':'big10', '1':'acc', '8':'sec', '4':'big12' };
+const CFB_OPTS = [['top25', 'Top 25 teams'], ['big10', 'Big Ten'], ['acc', 'ACC'], ['sec', 'SEC'], ['big12', 'Big 12'], ['other', 'All other FBS games']];
+// men's college basketball uses different ESPN conference ids
+const CBB_CONF = { '7':'big10', '2':'acc', '23':'sec', '8':'big12', '4':'bigeast', '3':'a10' };
+const CBB_OPTS = [['top25', 'Top 25 teams'], ['big10', 'Big Ten'], ['acc', 'ACC'], ['sec', 'SEC'], ['big12', 'Big 12'], ['bigeast', 'Big East'], ['a10', 'Atlantic 10'], ['other', 'All other Division I games']];
+// teams that always show up, in any league (match on part of the team name)
+const FAV_OPTS = [['bonaventure', 'St. Bonaventure']];
+const FEEDS = [
+  { id:'npr',  name:'NPR Top Stories',   cat:'National', url:'https://feeds.npr.org/1001/rss.xml' },
+  { id:'wtop', name:'WTOP (DC area)',    cat:'Local',    url:'https://wtop.com/feed/' },
+  { id:'bbc',  name:'BBC World',         cat:'World',    url:'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { id:'space',name:'SpaceNews',         cat:'Space',    url:'https://spacenews.com/feed/' },
+  { id:'ars',  name:'Ars Technica',      cat:'Tech',     url:'https://feeds.arstechnica.com/arstechnica/index' },
+];
+const FEED = Object.fromEntries(FEEDS.map(f => [f.id, f]));
+// broadcaster name (as ESPN reports it) -> the streaming service that carries it
+const BCAST = {
+  'peacock':'peacock','nbc':'peacock','prime video':'prime','amazon prime video':'prime','espn+':'espnplus',
+  'paramount+':'paramount','cbs':'paramount','max':'max','tnt':'max','tbs':'max','trutv':'max',
+  'apple tv+':'appletv','apple tv':'appletv','espn':'espn','espn2':'espn','espnu':'espn','abc':'espn','netflix':'netflix',
+  'accnx':'espnplus','secn+':'espnplus','acc network extra':'espnplus',
+};
+
+/* ---------- settings ---------- */
+const NATIVE = !!(window.OneGuideNative && window.OneGuideNative.launch);   // true inside the OneGuide Fire TV app
+const KEY = 'oneguide.v1', KEYSTORE = 'oneguide.tmdbkey';
+const getKey = () => { try { return (localStorage.getItem(KEYSTORE) || '').trim(); } catch (e) { return ''; } };
+const setKey = v => { try { v ? localStorage.setItem(KEYSTORE, v) : localStorage.removeItem(KEYSTORE); } catch (e) {} };
+const DEFAULTS = {
+  services:['netflix','hulu','max','disney','paramount','peacock','espnplus','appletv','prime','cable'],
+  channels:CHANNELS.map(c => c[0]),   // live channels your cable account includes
+  leagues:['nfl','cfb','cbb','nba'],
+  cfb:['top25','big10','acc','sec'],   // which college football games to list
+  cbb:['top25','big10','acc','sec'],   // which college basketball games to list
+  favs:['bonaventure'],                // my teams: always listed
+  feeds:['npr','wtop','bbc'],
+  mode: 'live',
+  side:0,       // side margin step
+  margin: NATIVE ? 0 : 2,     // bottom safe margin step (Silk's toolbar covers the bottom of the page; the native app has no toolbar)
+  scale:2,      // text size step (2 = Large, +10%)
+  v:3,
+};
+let S = (() => { try { const saved = JSON.parse(localStorage.getItem(KEY) || '{}'), x = { ...DEFAULTS, ...saved }; if (!saved.v || saved.v < 2) x.scale = 2; if (!saved.v || saved.v < 3) { x.services = [...new Set([...(saved.services || DEFAULTS.services), 'prime', 'cable'])]; } x.v = 3; return x; } catch (e) { return { ...DEFAULTS }; } })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const SIDES = [2.5, 4.5, 6.5], MARGINS = [0, 4, 8, 12], SCALES = [[.85, 'Small'], [1, 'Normal'], [1.1, 'Large'], [1.2, 'Larger'], [1.3, 'Extra large']];
+function applyDisplay() {
+  const r = document.documentElement;
+  S.margin = Math.min(Math.max(S.margin | 0, 0), MARGINS.length - 1); S.scale = Math.min(Math.max(S.scale | 0, 0), SCALES.length - 1);
+  r.style.fontSize = (0.8333 * SCALES[S.scale][0]).toFixed(4) + 'vw';
+  S.side = Math.min(Math.max(S.side | 0, 0), SIDES.length - 1);
+  r.style.setProperty('--safe-x', (SIDES[S.side] * 0.8333).toFixed(3) + 'vw');
+  r.style.setProperty('--safe-b', (MARGINS[S.margin] * 0.8333).toFixed(3) + 'vw');
+}
+applyDisplay();
+const owned = id => S.services.includes(id);
+
+/* ---------- time ---------- */
+const SLOT = 30 * 60e3, SLOTS = 12, PX = 17;       // guide: 12 half-hour columns, 17rem each
+const fmtT = ms => new Date(ms).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+const fmtD = ms => new Date(ms).toLocaleDateString([], { weekday:'short' }) + ' ' + fmtT(ms);
+const ago = ms => { const m = Math.max(1, Math.round((Date.now() - ms) / 60e3)); return m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' hr ago' : Math.round(m / 1440) + ' d ago'; };
+
+/* ---------- sample data (always aligned to "now") ---------- */
+const hue = s => { let x = 0; for (const c of s) x = (x * 31 + c.charCodeAt(0)) % 360; return x; };
+const grad = s => `linear-gradient(160deg,hsl(${hue(s)} 55% 32%),hsl(${(hue(s) + 50) % 360} 60% 14%))`;
+
+function sample() {
+  const now = Date.now(), t0 = Math.floor(now / SLOT) * SLOT - SLOT;
+  const P = {
+    netflix:  [['Harbor Lights','New episode · S2 E4',60],['The Long Orbit','New episode · S1 E7',60],['Northbound','Movie premiere',120]],
+    hulu:     [['Parkside Stories','New episode · S5 E2',30],['Glass Houses','New episode · S3 E9',60],['Night Shift','New episode · S2 E1',45]],
+    max:      [['Salt & Iron','New episode · S1 E5',60],['The Cartographers','New episode · S4 E3',60],['Late Edition','Special',90]],
+    disney:   [['Wild Frontiers','New episode · S1 E3',45],['Tidepool Kids','New episode',30],['Skyward','Movie premiere',105]],
+    paramount:[['Live: CBS Saturday Evening News','Live local channel',30],['Live: College Football','Live · late window',210],['Cold Harbor','New episode · S2 E6',60]],
+    peacock:  [['Live: Match Day','Live · soccer',120],['Live: Saturday Night Special','Live · sports',150],['The Pines','New episode · S1 E8',60]],
+    espnplus: [['Live: Fight Night Prelims','Live · combat sports',120],['Live: College Basketball','Live · early tip',125],['Live: Hockey Night','Live · NHL',150]],
+    appletv:  [['Orchard Street','New episode · S2 E5',45],['Deep Signal','New episode · S1 E2',55],['Meridian','Movie premiere',110]],
+    prime:    [['The Foundry','New episode · S3 E4',55],['Live: Thursday-style Game','Live · NBA',150],['Quiet Rivers','Movie',100]],
+    espn:     [['Live: Saturday Primetime','Live · college football',210],['SportsCenter','Studio',60],['Live: Bowl Preview','Studio',90]],
+  };
+  const guide = []; let i = 0;
+  for (const s of SERVICES) {
+    const pool = P[s.id]; i++;
+    let cur = t0 - ((i * 19) % 25) * 60e3, k = i % pool.length;
+    while (cur < t0 + SLOTS * SLOT) {
+      const [title, sub, mins] = pool[k % pool.length];
+      guide.push({ id:`g-${s.id}-${cur}`, service:s.id, title, sub, kind: title.startsWith('Live') ? 'live' : 'drop', start:cur, end:cur + mins * 60e3,
+        overview:'Sample listing. In Live mode this area shows real events from the services you subscribe to.' });
+      cur += mins * 60e3; k++;
+    }
+  }
+  const T = ['Ridgeline Hawks','Harbor City Foxes','Granite Peak Bears','Lakeshore Herons','Cedar Valley Rams','Blue Mesa Comets','Ironwood Pilots','Silverton Owls'];
+  const B = { nfl:[['CBS','Paramount+'],['NBC','Peacock'],['FOX']], cfb:[['ABC'],['Peacock'],['FS1']], cbb:[['ESPN2'],['Peacock'],['CBS Sports Network']],
+              nba:[['Prime Video'],['NBC','Peacock'],['ESPN']], mlb:[['ESPN+'],['Apple TV+'],['TBS']], nhl:[['ESPN+'],['TNT','Max'],['NHL Network']],
+              mls:[['Apple TV+'],['FOX'],['Apple TV+']], epl:[['Peacock'],['NBC','Peacock'],['USA Network']] };
+  const games = []; let g = 0;
+  for (const l of LEAGUES) for (let n = 0; n < 3; n++, g++) {
+    const home = T[(g * 3) % 8], away = T[(g * 3 + 1 + n) % 8], st = ['in','pre','post'][n];
+    const sa = 14 + (g * 7) % 20, sb = 10 + (g * 11) % 22;
+    games.push({ id:`s-${l.id}-${n}`, league:l.id, state:st,
+      home:{ name:home, score: st === 'pre' ? null : sa }, away:{ name:away, score: st === 'pre' ? null : sb },
+      detail: st === 'in' ? 'Q3 · 5:12' : st === 'pre' ? fmtD(now + (2 + n) * 3600e3) : 'Final',
+      start: st === 'pre' ? now + (2 + n) * 3600e3 : now - 2 * 3600e3, broadcasts:B[l.id][n] });
+  }
+  const titles = ['Harbor Lights','The Long Orbit','Northbound','Parkside Stories','Glass Houses','Salt & Iron','The Cartographers','Wild Frontiers','Skyward','Cold Harbor','The Pines','Orchard Street','Deep Signal','Meridian','The Foundry','Quiet Rivers'];
+  const shows = []; let q = 0;
+  for (const s of SERVICES) if (s.tmdb || ['espnplus'].includes(s.id)) for (let n = 0; n < 6; n++, q++) {
+    const t = titles[q % titles.length] + (n > 2 ? ' II' : '');
+    shows.push({ id:`sh-${s.id}-${n}`, title:t, year:2024 + (n % 3), type: n % 3 === 2 ? 'Movie' : 'Series', service:s.id,
+      overview:'Sample title. Connect a TMDB key and switch to Live mode to see what is genuinely popular on this service.' });
+  }
+  const today = SERVICES.filter(x => x.tmdb).slice(0, 7).map((x, i) => ({ id:`td-${x.id}`, title:titles[(i * 3 + 1) % titles.length], year:2026, type:'Series', service:x.id,
+    overview:'Sample listing: a new episode lands today.' }));
+  const fresh = shows.filter((_, i) => i % 3 === 1).slice(0, 14).map(x => ({ ...x, id:'f-' + x.id }));
+  const NT = { npr:['City council approves river-front trail plan','New study links sleep schedule to school performance','Airlines expect record holiday travel'],
+               wtop:['Weekend road work planned along I-66 corridor','Shenandoah Valley sees first hard freeze of the season','Local library expands winter hours'],
+               bbc:['Climate talks enter final negotiating round','Shipping routes shift as ports expand capacity','Archaeologists unveil newly mapped settlement'],
+               space:['Launch window opens for next cargo resupply mission','Small satellite makers eye lower launch costs','Lunar lander completes thermal vacuum test'],
+               ars:['Chipmakers preview next-gen efficiency gains','Open-source toolkit simplifies smart-TV app builds','Researchers demo faster battery charging'] };
+  const news = []; let m = 0;
+  for (const fid of S.feeds) for (const t of NT[fid]) { m++; news.push({ id:`n-${m}`, feed:fid, cat:FEED[fid].cat, source:FEED[fid].name, title:t,
+    summary:'Sample headline. In Live mode this panel shows the story summary from the real feed.', time: now - m * 17 * 60e3 }); }
+  news.sort((a, b) => b.time - a.time);
+  return { t0, guide, games, shows, today, fresh, news, weather:{ name:CONFIG.weather.name, temp:48, short:'Clear', hi:57, lo:33 } };
+}
+
+/* ---------- live adapters (best-effort; fall back to sample on any failure) ---------- */
+async function getJSON(url, ms = 9000) {
+  const c = new AbortController(), t = setTimeout(() => c.abort(), ms);
+  try { const r = await fetch(url, { signal:c.signal }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+const plain = s => { try { return (new DOMParser().parseFromString(s || '', 'text/html').body.textContent || '').replace(/\s+/g, ' ').trim(); } catch (e) { return ''; } };
+
+async function liveShows() {
+  const K = getKey(); if (!K) throw new Error('add your TMDB key in Settings');
+  const IMG = 'https://image.tmdb.org/t/p/w342', R = CONFIG.region;
+  const iso = ms => new Date(ms).toISOString().slice(0, 10), now = Date.now(), today = iso(now), since = iso(now - 45 * 86400e3);
+  const base = (kind, s) => `https://api.themoviedb.org/3/discover/${kind}?api_key=${K}&watch_region=${R}&with_watch_providers=${s.tmdb}&with_watch_monetization_types=flatrate&sort_by=popularity.desc`;
+  const soft = u => getJSON(u).catch(() => ({ results:[] }));          // secondary lookups may fail without sinking the rest
+  const map = (x, type, s) => ({ id:`tmdb-${type}-${x.id}`, title:x.name || x.title, year:(x.first_air_date || x.release_date || '').slice(0, 4), type, service:s.id,
+    overview:x.overview || '', poster:x.poster_path ? IMG + x.poster_path : null, rating:x.vote_average ? Math.round(x.vote_average * 10) / 10 : null, pop:x.popularity || 0 });
+  const out = { shows:[], fresh:[], today:[] };
+  const jobs = SERVICES.filter(s => owned(s.id) && s.tmdb).map(async s => {
+    const [tv, mv, ntv, nmv, air] = await Promise.all([
+      getJSON(base('tv', s)), soft(base('movie', s)),
+      soft(base('tv', s) + `&first_air_date.gte=${since}`), soft(base('movie', s) + `&primary_release_date.gte=${since}&primary_release_date.lte=${today}`),
+      soft(base('tv', s) + `&air_date.gte=${today}&air_date.lte=${today}`) ]);
+    const pick = (a, t, n) => (a.results || []).slice(0, n).map(x => map(x, t, s));
+    out.shows.push(...[...pick(tv, 'Series', 8), ...pick(mv, 'Movie', 8)].sort((a, b) => b.pop - a.pop).slice(0, 12));
+    out.fresh.push(...[...pick(ntv, 'Series', 6), ...pick(nmv, 'Movie', 6)]);
+    out.today.push(...pick(air, 'Series', 5));
+  });
+  const res = await Promise.allSettled(jobs), ok = res.filter(r => r.status === 'fulfilled').length;
+  if (!ok && res.length) throw res[0].reason;
+  if (!res.length) throw new Error('Turn on at least one streaming service in Settings');
+  out.fresh.sort((a, b) => b.pop - a.pop); out.today.sort((a, b) => b.pop - a.pop);
+  return out;
+}
+async function liveGames() {
+  const games = []; let failed = 0, lastErr = null;
+  await Promise.all(S.leagues.map(async id => { try {
+    // College football: ask for every FBS game (ESPN's default list is only a featured handful), then filter in the app.
+    const d = id === 'cfb' ? await getJSON('https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?groups=80&limit=400', 25000)
+            : id === 'cbb' ? await getJSON('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=50&limit=400', 25000)
+                           : await getJSON(`https://site.api.espn.com/apis/site/v2/sports/${LG[id].path}/scoreboard`);
+    for (const e of d.events || []) {
+      const c = e.competitions[0], H = c.competitors.find(x => x.homeAway === 'home'), A = c.competitors.find(x => x.homeAway === 'away');
+      const rk = t => { const r = t.curatedRank && t.curatedRank.current; return r && r <= 25 ? r : 0; };
+      const college = id === 'cfb' || id === 'cbb', CONF = id === 'cbb' ? CBB_CONF : CFB_CONF;
+      const isFav = t => S.favs.some(k => t.team.displayName.toLowerCase().includes(k));
+      const nm = t => (isFav(t) ? '★ ' : '') + (college && rk(t) ? '#' + rk(t) + ' ' : '') + t.team.displayName;
+      let tags = [];
+      if (college) { if (rk(H) || rk(A)) tags.push('top25'); for (const t of [H, A]) tags.push(CONF[String(t.team.conferenceId)] || 'other'); }
+      if (isFav(H) || isFav(A)) tags.push('fav');
+      if (!tags.length) tags = null;
+      const st = e.status.type.state;
+      const names = [...(c.broadcasts || []).flatMap(b => b.names || []), ...(c.geoBroadcasts || []).map(b => b.media && b.media.shortName)].filter(Boolean);
+      games.push({ id:'e-' + e.id, league:id, state:st,
+        tags, home:{ name:nm(H), score: st === 'pre' ? null : +H.score }, away:{ name:nm(A), score: st === 'pre' ? null : +A.score },
+        detail: st === 'pre' ? fmtD(Date.parse(e.date)) : e.status.type.shortDetail, start:Date.parse(e.date), broadcasts:[...new Set(names)] });
+    }
+  } catch (err) { failed++; lastErr = err; } }));      // one league failing must not sink the others
+  if (S.leagues.length && failed === S.leagues.length) throw lastErr;
+  return games;
+}
+async function liveNews() {
+  const items = [];
+  await Promise.all(S.feeds.map(async id => {
+    const d = await getJSON(CONFIG.rssProxy + encodeURIComponent(FEED[id].url));
+    (d.items || []).slice(0, 8).forEach((x, i) => items.push({ id:`${id}-${i}`, feed:id, cat:FEED[id].cat, source:FEED[id].name,
+      title:plain(x.title), summary:plain(x.description || x.content).slice(0, 420), time:Date.parse((x.pubDate || '').replace(' ', 'T') + 'Z') || Date.now() }));
+  }));
+  return items.sort((a, b) => b.time - a.time);
+}
+async function liveWeather() {
+  const w = CONFIG.weather, p = await getJSON(`https://api.weather.gov/points/${w.lat},${w.lon}`);
+  const f = await getJSON(p.properties.forecast), a = f.properties.periods;
+  const day = a.find(x => x.isDaytime) || a[0], night = a.find(x => !x.isDaytime) || a[1];
+  return { name:w.name, temp:a[0].temperature, short:a[0].shortForecast, hi:day.temperature, lo:night ? night.temperature : day.temperature };
+}
+const gameOk = g => S.leagues.includes(g.league) && (!g.tags || g.tags.includes('fav') || (g.league === 'cfb' ? g.tags.some(t => S.cfb.includes(t)) : g.league === 'cbb' ? g.tags.some(t => S.cbb.includes(t)) : true));
+function guideFromGames(games) {
+  const t0 = Math.floor(Date.now() / SLOT) * SLOT - SLOT, out = [];
+  for (const g of games) {
+    if (g.state === 'post' || !gameOk(g)) continue;
+    for (const o of watchOptions(g)) if (o.svc && owned(o.svc.id)) out.push({ id:`${g.id}-${o.svc.id}`, service:o.svc.id,
+      title:`${g.away.name} at ${g.home.name}`, kind:'live', sub:`${LG[g.league].name} · via ${o.ch || o.label}`, start:g.start, end:g.start + LG[g.league].mins * 60e3,
+      overview:`${LG[g.league].name}. Broadcast: ${g.broadcasts.join(', ')}.` });
+  }
+  return { t0, guide:out };
+}
+
+/* ---------- data store ---------- */
+const D = { status:{}, errors:{}, loading:false };
+const emptyData = () => ({ t0:Math.floor(Date.now() / SLOT) * SLOT - SLOT, guide:[], games:[], shows:[], today:[], fresh:[], news:[], weather:null });
+async function loadAll() {
+  Object.assign(D, S.mode === 'live' ? emptyData() : sample(), { status:{ shows:'sample', sports:'sample', news:'sample', weather:'sample', guide:'sample' }, errors:{}, loading:S.mode === 'live' });
+  if (S.mode !== 'live') return;
+  const ok = (key, fn) => fn().then(r => { if (r) { D.status[key] = 'live'; } return r; }).catch(e => { D.errors[key] = (e && e.message) ? String(e.message) : String(e); return null; });
+  const [shows, games, news, wx] = await Promise.all([ok('shows', liveShows), ok('sports', liveGames), ok('news', liveNews), ok('weather', liveWeather)]);
+  if (shows && shows.shows.length) { D.shows = shows.shows; D.fresh = shows.fresh; D.today = shows.today; } else if (shows) { D.status.shows = 'sample'; D.errors.shows = 'TMDB returned nothing for your services'; } if (games) D.games = games; if (news && news.length) D.news = news; if (wx) D.weather = wx;
+  if (games) { const g = guideFromGames(games); D.guide = g.guide; D.t0 = g.t0; D.status.guide = 'live'; }
+  D.loading = false;
+}
+const mark = key => h('span', { class:'tag ' + (D.status[key] === 'live' ? 'live' : '') }, D.status[key] === 'live' ? 'LIVE DATA' : S.mode === 'live' ? (D.loading ? 'LOADING' : 'UNAVAILABLE') : 'SAMPLE DATA');
+
+/* ---------- helpers ---------- */
+const onAir = ev => ev.start <= Date.now() && ev.end > Date.now();
+const evChip = ev => onAir(ev) ? (ev.kind === 'live' ? h('span', { class:'chip live' }, 'LIVE') : h('span', { class:'chip new' }, 'NEW')) : h('span', { class:'chip' }, fmtT(ev.start));
+const badge = svc => h('span', { class:'badge', style:`background:${svc.color};color:${svc.dark ? '#111' : '#fff'}` }, svc.name);
+function watchOptions(g) {
+  const out = [];
+  for (const n of g.broadcasts || []) { const id = BCAST[n.toLowerCase()], svc = id ? SVC[id] : null;
+    out.push({ svc, label:n, owned: !!svc && owned(svc.id) }); }
+  for (const n of g.broadcasts || []) { const ch = CH_BY_NAME[n.toLowerCase()];            // the same game may also be on a cable channel
+    if (ch && !out.some(o => o.ch === CH[ch])) out.push({ svc:SVC.cable, label:n, ch:CH[ch], owned: owned('cable') && S.channels.includes(ch) }); }
+  return out.filter(o => o.svc || !out.some(x => x.ch && x.label === o.label));     // drop the bare 'needs live TV' line once a cable channel covers it
+}
+const toast = (() => { let t; return msg => { const el = $('#toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(t); t = setTimeout(() => el.style.display = 'none', 4500); }; })();
+function launch(svc, item) {
+  // A browser page can't start other apps. A native wrapper can expose window.OneGuideNative.launch(serviceId, title).
+  if (NATIVE) { let r = ''; try { r = window.OneGuideNative.launch(svc.id, (item && item.title) || ''); } catch (e) { r = 'Could not open ' + svc.name + '.'; } return toast(r || 'Opening ' + svc.name + '...'); }
+  toast(svc.app ? `A web page can't open apps yet. Open ${svc.app} on your Fire Cube (or hold the mic button and say "Alexa, open Spectrum TV").` : `A web page can't open apps yet. Hold the mic button and say "Alexa, open ${svc.name}".`);
+}
+
+/* ---------- modal ---------- */
+let modalOpen = false, lastFocus = null;
+function openDetail(o) {
+  const own = o.options.find(x => x.owned && x.svc);
+  const sheet = h('div', { class:'sheet' },
+    h('div', { class:'row', style:'justify-content:flex-start' }, ...(o.chips || [])),
+    h('div', { class:'ttl' }, o.title), h('div', { class:'sub' }, o.sub || ''),
+    o.overview ? h('div', { class:'ov' }, o.overview) : null,
+    h('div', null, ...o.options.map(op => h('div', { class:'opt ' + (op.owned ? 'own' : '') },
+      op.svc ? badge(op.svc) : h('span', { class:'badge plain' }, op.label),
+      h('span', { class:'ownnote' }, op.owned ? '✓ On your services' + (op.ch ? ' · ' + op.ch : '') : op.svc ? 'Not on your services' + (op.ch ? ' · ' + op.ch : '') : 'Needs live TV or antenna')))),
+    h('div', { class:'tip' }, 'Fire Cube shortcut: hold the mic button and say ', h('b', null, `"Alexa, ${o.voice || 'watch ' + o.title}"`)),
+    h('div', { class:'btns' }, own ? F('button', { class:'btn primary', onclick:() => launch(own.svc, o) }, 'Open ' + own.svc.name) : null,
+      F('button', { class:'btn', onclick:closeModal }, 'Close')));
+  lastFocus = document.activeElement; modalOpen = true;
+  const m = $('#modal'); m.replaceChildren(sheet); m.classList.add('open');
+  $('#modal .f').focus({ preventScroll:true });
+}
+function closeModal() {
+  modalOpen = false; $('#modal').classList.remove('open');
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll:true });
+}
+const showDetail = sh => openDetail({ title:sh.title, sub:`${sh.type}${sh.year ? ' · ' + sh.year : ''}${sh.rating ? ' · ★ ' + sh.rating : ''}`, overview:sh.overview, chips:[badge(SVC[sh.service])],
+  options:[{ svc:SVC[sh.service], owned:owned(sh.service) }] });
+const eventDetail = ev => {
+  openDetail({ title:ev.title, sub:`${fmtT(ev.start)} – ${fmtT(ev.end)} · ${ev.sub || ''}`, overview:ev.overview,
+    chips:[evChip(ev)], options:[{ svc:SVC[ev.service], owned:owned(ev.service) }] }); };
+const gameDetail = g => { const o = watchOptions(g); const any = o.find(x => x.owned);
+  openDetail({ title:`${g.away.name} at ${g.home.name}`, sub:`${LG[g.league].name} · ${g.detail}`,
+    overview: g.state === 'post' ? `Final: ${g.away.name} ${g.away.score}, ${g.home.name} ${g.home.score}.` : any ? 'Available on one of your services.' : 'None of the listed broadcasts are on your services.',
+    chips:[statusChip(g)], options:o.length ? o : [{ label:'Broadcast info not listed', owned:false }], voice:'watch ' + LG[g.league].name }); };
+
+/* ---------- cards ---------- */
+function statusChip(g) { return g.state === 'in' ? h('span', { class:'chip live' }, 'LIVE') : g.state === 'post' ? h('span', { class:'chip done' }, 'FINAL') : h('span', { class:'chip' }, 'UPCOMING'); }
+const eventCard = ev => {
+  return F('div', { class:'card event', onclick:() => eventDetail(ev) },
+    h('div', { class:'row' }, evChip(ev), badge(SVC[ev.service])),
+    h('div', { class:'ttl' }, ev.title), h('div', { class:'sub' }, ev.sub)); };
+const showCard = sh => F('div', { class:'card poster', style:`background-image:${sh.poster ? `url(${sh.poster}),` : ''}${grad(sh.title)}`, onclick:() => showDetail(sh) },
+  badge(SVC[sh.service]), h('div', { class:'cap' }, sh.title));
+function gameCard(g, big) {
+  const o = watchOptions(g), mine = o.find(x => x.owned);
+  const win = g.state === 'post' && g.home.score !== g.away.score ? (g.home.score > g.away.score ? 'home' : 'away') : null;
+  const team = (t, side) => h('div', { class:'team ' + (win && win !== side ? 'lose' : '') }, h('span', null, t.name), h('span', { class:'sc' }, t.score == null ? '' : t.score));
+  return F('div', { class:'card game' + (big ? ' big' : ''), onclick:() => gameDetail(g) },
+    h('div', { class:'row' }, statusChip(g), h('span', { class:'sub' }, `${big ? LG[g.league].name : LG[g.league].short} · ${g.detail}`)),
+    team(g.away, 'away'), team(g.home, 'home'),
+    h('div', { class:'watch' }, mine ? h('span', null, 'Watch on ', h('b', null, mine.svc.name + (mine.ch ? ' (' + mine.ch + ')' : '') + ' ✓')) : o.length ? 'Not on your services: ' + [...new Set(o.map(x => x.label))].join(', ') : 'No broadcast listed'));
+}
+const newsCard = n => F('div', { class:'card headline', onclick:() => toast('Open this story on your phone or the news app. Full articles are not shown here.') },
+  h('div', { class:'sub' }, `${n.source} · ${ago(n.time)}`), h('div', { class:'ttl' }, n.title));
+const rail = (title, items, extra) => h('section', null, h('h2', null, title, extra || null), h('div', { class:'track' }, items));
+
+/* ---------- screens ---------- */
+const screens = {
+  home() {
+    const now = Date.now();
+    const evs = D.guide.filter(e => owned(e.service) && e.end > now && e.start < now + 150 * 60e3)
+      .sort((a, b) => (b.start <= now) - (a.start <= now) || a.start - b.start);
+    const hero = evs[0];
+    const games = [...D.games].filter(gameOk).sort((a, b) => (b.state === 'in') - (a.state === 'in') || (b.tags && b.tags.includes('top25')) - (a.tags && a.tags.includes('top25')) || a.start - b.start).slice(0, 8);
+    const svcs = SERVICES.filter(s => owned(s.id) && D.shows.some(x => x.service === s.id));
+    const todayL = (D.today || []).filter(x => owned(x.service)).slice(0, 14), freshL = (D.fresh || []).filter(x => owned(x.service)).slice(0, 14);
+    return h('div', null,
+      hero ? F('div', { class:'hero', style:`--herobg:${grad(hero.title)}`, onclick:() => eventDetail(hero) },
+        h('div', { class:'row', style:'justify-content:flex-start' }, hero.start <= now ? h('span', { class:'chip ' + (hero.kind === 'live' ? 'live' : 'new') }, hero.kind === 'live' ? 'LIVE NOW' : 'NEW TODAY') : h('span', { class:'chip' }, 'UP NEXT ' + fmtT(hero.start)), badge(SVC[hero.service])),
+        h('div', { class:'ttl' }, hero.title), h('div', { class:'sub' }, hero.sub)) : null,
+      evs.length > 1 ? rail('Live & starting soon', evs.slice(1, 9).map(eventCard), mark('guide')) : null,
+      todayL.length ? rail('New episodes today', todayL.map(showCard), mark('shows')) : null,
+      freshL.length ? rail('New on your services', freshL.map(showCard), mark('shows')) : null,
+      games.length ? rail('Scores & games', games.map(g => gameCard(g)), mark('sports')) : null,
+      svcs.map(s => rail('Popular on ' + s.name, D.shows.filter(x => x.service === s.id).slice(0, 10).map(showCard), mark('shows'))),
+      D.news.length ? rail('Headlines', D.news.slice(0, 8).map(newsCard), mark('news')) : null,
+      (!D.loading && !hero && !todayL.length && !freshL.length && !games.length && !svcs.length && !D.news.length) ? h('div', { class:'note', style:'margin-top:2rem' }, 'Nothing to show yet. Open Settings, then Data status, to see what could not be loaded.') : null,
+      D.loading ? h('div', { class:'note', style:'margin-top:2rem' }, 'Loading your guide...') : null);
+  },
+  guide() {
+    const t0 = D.t0, tEnd = t0 + SLOTS * SLOT, W = SLOTS * PX, now = Date.now();
+    const head = h('div', { class:'g-row g-time' }, h('div', { class:'g-label' }),
+      h('div', { class:'g-lane', style:`width:${W}rem` }, Array.from({ length:SLOTS }, (_, i) => h('div', { class:'g-tick', style:`left:${i * PX}rem;width:${PX}rem` }, fmtT(t0 + i * SLOT)))));
+    const rows = SERVICES.filter(s => owned(s.id)).map(s => {
+      const evs = D.guide.filter(e => e.service === s.id && e.end > t0 && e.start < tEnd).sort((a, b) => a.start - b.start);
+      return h('div', { class:'g-row' }, h('div', { class:'g-label' }, badge(s)),
+        h('div', { class:'g-lane', style:`width:${W}rem` }, evs.length ? evs.map(e => {
+          const a = Math.max(e.start, t0), b = Math.min(e.end, tEnd), live = e.kind === 'live' && e.start <= now && e.end > now;
+          return F('div', { class:'block' + (live ? ' live' : ''), style:`left:${(a - t0) / SLOT * PX}rem;width:${(b - a) / SLOT * PX - .3}rem`, onclick:() => eventDetail(e) },
+            h('div', { class:'bt' }, e.title), h('div', { class:'bs' }, `${fmtT(e.start)} · ${e.sub}`));
+        }) : h('div', { class:'g-empty' }, 'Nothing scheduled on this service in this window')));
+    });
+    const nx = 16 + (now - t0) / SLOT * PX;
+    return h('div', null, h('h1', null, 'Guide ', mark('guide')),
+      h('div', { class:'sub', style:'margin-bottom:1rem' }, 'Live events and new-episode drops across the services you subscribe to. Red = live now.'),
+      h('div', { class:'g-scroll' }, h('div', { class:'g-inner' }, head, rows,
+        h('div', { class:'nowline', style:`left:${nx}rem` }), h('div', { class:'nowlabel', style:`left:${nx}rem` }, 'NOW'))));
+  },
+  shows() {
+    let filter = 'all'; const chips = h('div', { class:'chips' }), grid = h('div', { class:'grid6' });
+    const draw = () => {
+      const have = SERVICES.filter(x => owned(x.id) && D.shows.some(y => y.service === x.id)), opts = ['all', ...have.map(x => x.id)];
+      if (!opts.includes(filter)) filter = 'all';
+      chips.replaceChildren(...opts.map(id => F('div', { class:'chip' + (filter === id ? ' on' : ''), onclick:() => { filter = id; draw(); chips.children[opts.indexOf(id)].focus(); } }, id === 'all' ? 'All services' : SVC[id].name)));
+      const list = D.shows.filter(x => owned(x.service) && (filter === 'all' || x.service === filter)).sort((a, b) => (b.pop || 0) - (a.pop || 0)).slice(0, 42);
+      grid.replaceChildren(...(list.length ? list.map(sh => { const c = showCard(sh); c.classList.add('in-grid'); return c; }) : [h('div', { class:'note' }, 'Nothing to show. Turn on a streaming service in Settings.')]));
+    };
+    draw();
+    return h('div', null, h('h1', null, 'Shows ', mark('shows')), h('div', { class:'sub' }, 'Popular titles on the services you subscribe to. Press OK on one for details.'), chips, grid);
+  },
+  sports() {
+    let filter = 'all'; const grid = h('div', { class:'grid3' }), chips = h('div', { class:'chips' });
+    const draw = () => {
+      chips.replaceChildren(...['all', ...S.leagues].map(id => F('div', { class:'chip' + (filter === id ? ' on' : ''), onclick:() => { filter = id; draw(); chips.children[['all', ...S.leagues].indexOf(id)].focus(); } }, id === 'all' ? 'All' : LG[id].name)));
+      const list = D.games.filter(g => gameOk(g) && (filter === 'all' || g.league === filter))
+        .sort((a, b) => ({ in:0, pre:1, post:2 })[a.state] - ({ in:0, pre:1, post:2 })[b.state] || a.start - b.start);
+      grid.replaceChildren(...(list.length ? list.map(g => gameCard(g, true)) : [h('div', { class:'note' }, D.loading ? 'Loading...' : S.mode === 'live' && D.status.sports !== 'live' ? 'Could not load live scores' + (D.errors.sports ? ' (' + D.errors.sports + ')' : '') + '.' : 'No games right now for these leagues. Add more in Settings.')]));
+    };
+    draw();
+    return h('div', null, h('h1', null, 'Sports ', mark('sports')), h('div', { class:'sub' }, 'Green means it is streaming on a service you subscribe to.'), chips, grid);
+  },
+  news() {
+    let filter = 'all'; const list = h('div', { class:'nlist' }), chips = h('div', { class:'chips' }), reader = h('div', { class:'reader' });
+    const read = n => reader.replaceChildren(h('span', { class:'chip' }, n.cat), h('div', { class:'ttl' }, n.title), h('div', { class:'sub', style:'margin-bottom:1rem' }, `${n.source} · ${ago(n.time)}`), h('p', null, n.summary || 'No summary available.'));
+    const draw = () => {
+      const opts = ['all', ...S.feeds];
+      chips.replaceChildren(...opts.map(id => F('div', { class:'chip' + (filter === id ? ' on' : ''), onclick:() => { filter = id; draw(); chips.children[opts.indexOf(id)].focus(); } }, id === 'all' ? 'All' : FEED[id].cat)));
+      const items = D.news.filter(n => S.feeds.includes(n.feed) && (filter === 'all' || n.feed === filter)).slice(0, 14);
+      list.replaceChildren(...items.map(n => F('div', { class:'nitem', onfocus:() => read(n), onclick:() => read(n) }, h('div', { class:'sub' }, `${n.cat} · ${n.source} · ${ago(n.time)}`), h('div', { class:'ttl' }, n.title))));
+      if (items[0]) read(items[0]); else reader.replaceChildren(h('div', { class:'note' }, D.loading ? 'Loading...' : S.mode === 'live' && D.status.news !== 'live' ? 'Could not load live news' + (D.errors.news ? ' (' + D.errors.news + ')' : '') + '.' : 'No stories. Turn on a news source in Settings.'));
+    };
+    draw();
+    return h('div', null, h('h1', null, 'News ', mark('news')), chips, h('div', { class:'news' }, list, reader));
+  },
+  settings() {
+    const toggle = (label, on, set) => { const el = F('div', { class:'toggle' + (on() ? ' on' : '') }); const paint = () => { el.classList.toggle('on', on()); el.replaceChildren(h('span', { class:'mk' }, on() ? '✓' : ''), label); };
+      el.addEventListener('click', () => { set(); save(); paint(); refreshSoon(); }); paint(); return el; };
+    const list = (key, id) => () => S[key].includes(id), flip = (key, id) => () => { S[key] = S[key].includes(id) ? S[key].filter(x => x !== id) : [...S[key], id]; };
+    const sec = (title, kids, note) => h('div', { class:'set-sec' }, h('h2', null, title), h('div', { class:'toggles' }, kids), note ? h('div', { class:'note' }, note) : null);
+    const keyBox = () => F('input', { type:'text', class:'keybox', placeholder:'Select here, then type your TMDB key', autocomplete:'off', autocapitalize:'off', spellcheck:'false', value:getKey(),
+      onchange:e => { setKey(e.target.value.trim()); toast(getKey() ? 'TMDB key saved. Loading shows...' : 'TMDB key cleared.'); refreshSoon(); } });
+    const cycle = (label, get, names, set) => { const el = F('div', { class:'toggle on' }); const paint = () => el.replaceChildren(label + ': ', h('b', null, names[get()]));
+      el.addEventListener('click', () => { set((get() + 1) % names.length); save(); applyDisplay(); paint(); }); paint(); return el; };
+    return h('div', null, h('h1', null, 'Settings'),
+      sec('Display', [cycle('Side margin', () => S.side, ['Small', 'Medium', 'Large'], v => S.side = v), cycle('Bottom margin', () => S.margin, ['None', 'Small', 'Medium', 'Large'], v => S.margin = v), cycle('Text size', () => S.scale, SCALES.map(x => x[1]), v => S.scale = v)],
+        'Press OK on a button to step through the options. If the bottom of the screen is cut off, raise the bottom margin until the hint bar is fully visible. If the left or right edge is cut off by your TV, raise the side margin.'),
+      sec('TMDB key (for TV shows)', [keyBox()], getKey() ? 'A key is saved on this device. To change it, select the box, type the new key, and press Done.' : 'Shows need a free TMDB key. Select the box, type or paste your TMDB API key (the long one, 32 characters), and press Done. It stays on this device only.'),
+      sec('My subscriptions', SERVICES.map(s => toggle(s.name, list('services', s.id), flip('services', s.id))), 'The guide, home screen and "watch on" labels adapt to whatever is checked here.'),
+      sec('Sports leagues', LEAGUES.map(l => toggle(l.name, list('leagues', l.id), flip('leagues', l.id)))),
+      owned('cable') ? sec('Live TV channels', CHANNELS.map(([id, n]) => toggle(n, list('channels', id), flip('channels', id))), 'Check the channels your Spectrum or Cox package includes. Games on these channels show up as watchable, next to any streaming option.') : null,
+      S.leagues.includes('cbb') ? sec('College basketball games', CBB_OPTS.map(([id, n]) => toggle(n, list('cbb', id), flip('cbb', id))), 'Pick which men\'s college basketball games are listed. A game shows if either team matches.') : null,
+      sec('My teams', FAV_OPTS.map(([id, n]) => toggle(n, list('favs', id), flip('favs', id))), 'Games for these teams always show up, in any league, marked with a star.'),
+      S.leagues.includes('cfb') ? sec('College football games', CFB_OPTS.map(([id, n]) => toggle(n, list('cfb', id), flip('cfb', id))), 'Pick which college football games are listed. A game shows if either team matches. Ranked teams show their rank, like #12.') : null,
+      sec('News sources', FEEDS.map(f => toggle(`${f.cat}: ${f.name}`, list('feeds', f.id), flip('feeds', f.id)))),
+      NATIVE ? sec('Apps on this Fire Cube', [], (() => { try { const f = JSON.parse(window.OneGuideNative.detect()), ids = SERVICES.map(x => x.id); return 'Found: ' + (ids.filter(i => f[i]).map(i => SVC[i].name + ' (' + f[i] + ')').join(', ') || 'none') + '.   Not found: ' + (ids.filter(i => !f[i]).map(i => SVC[i].name).join(', ') || 'none') + '.'; } catch (e) { return 'Could not check installed apps.'; } })()) : null,
+      sec('Data status', [], S.mode !== 'live' ? 'Live data is off, so everything shown is sample data.' :
+        [['TV shows', 'shows'], ['Sports', 'sports'], ['News', 'news'], ['Weather', 'weather']].map(([n, k]) => `${n}: ${D.status[k] === 'live' ? 'live' : D.loading ? 'loading' : 'could not load' + (D.errors[k] ? ' (' + (D.errors[k] === '401' || D.errors[k] === 401 ? 'key rejected - re-enter the TMDB key in Settings' : D.errors[k]) + ')' : '')}.`).join('   ')),
+      sec('Data', [toggle('Use live data (otherwise sample data)', () => S.mode === 'live', () => { S.mode = S.mode === 'live' ? 'sample' : 'live'; })],
+        'Live mode pulls scores and broadcasts from ESPN, news via an RSS proxy, weather from the National Weather Service, and shows from TMDB (needs a TMDB key, entered above). Anything that cannot be loaded is left out rather than faked. ' +
+        'Streaming-availability data from TMDB is provided by JustWatch. This product uses the TMDB API but is not endorsed or certified by TMDB. Matching broadcasts to services is best-effort.'));
+  },
+};
+
+/* ---------- shell ---------- */
+const TABS = [['home','Home'], ['guide','Guide'], ['shows','Shows'], ['sports','Sports'], ['news','News'], ['settings','Settings']];
+let current = 'home';
+function show(id) {
+  current = id; $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+  const main = $('#main'); main.replaceChildren(screens[id]()); main.scrollTop = 0;
+  $('#datatag').textContent = S.mode === 'live' ? 'Live mode' : 'Sample data';
+}
+$('#nav').replaceChildren(...TABS.map(([id, label]) => F('a', { class:'tab', 'data-id':id, onfocus:() => { if (current !== id || !$('#main').children.length) show(id); } }, label)));
+let rt; const refreshSoon = () => { clearTimeout(rt); rt = setTimeout(async () => { await loadAll(); const inMain = document.activeElement && $('#main').contains(document.activeElement);
+  if (current !== 'settings') { show(current); if (inMain) { const f = $('#main .f'); if (f) f.focus({ preventScroll:true }); } } updateClock(); }, S.mode === 'live' ? 700 : 0); };
+function updateClock() {
+  const n = Date.now(); $('#clk').textContent = fmtT(n);
+  const w = D.weather; $('#wx').textContent = new Date(n).toLocaleDateString([], { weekday:'long', month:'short', day:'numeric' }) + (w ? `  ·  ${w.temp}° ${w.short}` : '');
+}
+
+/* ---------- keep the selected card fully visible ----------
+   Done by hand (not scrollIntoView/scroll-margin) so it behaves the same in every browser, including Silk's own focus scrolling. */
+function ensureVisible(el) {
+  const main = $('#main'); if (!main || !main.contains(el)) return;
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const mr = main.getBoundingClientRect(), er = el.getBoundingClientRect(), topRoom = 3.4 * rem, botRoom = 2.4 * rem;
+  if (er.top < mr.top + topRoom - 1) main.scrollTop -= (mr.top + topRoom - er.top);
+  else if (er.bottom > mr.bottom - botRoom + 1) main.scrollTop += (er.bottom - (mr.bottom - botRoom));
+  const sc = el.closest('.track, .g-scroll');
+  if (sc) {
+    const sr = sc.getBoundingClientRect(), now = el.getBoundingClientRect(), left = (sc.classList.contains('g-scroll') ? 17.4 : 1.2) * rem, right = 1.2 * rem;
+    if (now.left < sr.left + left - 1) sc.scrollLeft -= (sr.left + left - now.left);
+    else if (now.right > sr.right - right + 1) sc.scrollLeft += (now.right - (sr.right - right));
+  }
+}
+
+/* ---------- remote / keyboard navigation ---------- */
+const BACK = new Set(['Escape', 'Backspace', 'GoBack', 'BrowserBack']);
+function focusables() {
+  const scope = modalOpen ? $$('#modal .f') : [...$$('header .f'), ...$$('#main .f')];
+  return scope.filter(el => el.offsetParent !== null);
+}
+function move(dir) {
+  const els = focusables(), cur = document.activeElement && document.activeElement.classList.contains('f') && els.includes(document.activeElement) ? document.activeElement : null;
+  if (!cur) { if (els[0]) els[0].focus(); return; }
+  const a = cur.getBoundingClientRect(), tol = .5 * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16); let best = null, bs = Infinity;   // tol: the selected card is scaled up a little, so edges are compared with some slack, but a neighbour in the same row must never count as above/below
+  for (const el of els) {
+    if (el === cur) continue;
+    const b = el.getBoundingClientRect(), horiz = dir === 'left' || dir === 'right'; let gap, cross;
+    if (dir === 'right') { if (!(b.left >= a.right - tol && b.left > a.left + 2)) continue; gap = Math.max(0, b.left - a.right); }
+    if (dir === 'left')  { if (!(b.right <= a.left + tol && b.right < a.right - 2)) continue; gap = Math.max(0, a.left - b.right); }
+    if (dir === 'down')  { if (!(b.top >= a.bottom - tol && b.top > a.top + 2)) continue; gap = Math.max(0, b.top - a.bottom); }
+    if (dir === 'up')    { if (!(b.bottom <= a.top + tol && b.bottom < a.bottom - 2)) continue; gap = Math.max(0, a.top - b.bottom); }
+    cross = horiz ? Math.max(0, Math.max(a.top, b.top) - Math.min(a.bottom, b.bottom)) : Math.max(0, Math.max(a.left, b.left) - Math.min(a.right, b.right));
+    const tie = horiz ? Math.abs(b.top - a.top) : Math.abs(b.left - a.left);
+    const score = gap + cross * 3 + tie * .02;
+    if (score < bs) { bs = score; best = el; }
+  }
+  if (best) { best.focus({ preventScroll:true }); ensureVisible(best); }
+}
+document.addEventListener('keydown', e => {
+  const k = e.key, map = { ArrowRight:'right', ArrowLeft:'left', ArrowDown:'down', ArrowUp:'up' };
+  if (document.activeElement && document.activeElement.tagName === 'INPUT' && !map[k] && k !== 'Escape' && e.keyCode !== 4) return;   // typing in a text box: keep Backspace, Enter, space
+  if (map[k]) { e.preventDefault(); move(map[k]); }
+  else if ((k === 'Enter' || k === ' ') && document.activeElement && document.activeElement.classList.contains('f') && !(k === 'Enter' && document.activeElement.tagName === 'BUTTON')) { e.preventDefault(); document.activeElement.click(); }
+  else if (BACK.has(k) || e.keyCode === 4) {
+    if (modalOpen) { e.preventDefault(); closeModal(); }
+    else if (!document.activeElement.classList.contains('tab')) { e.preventDefault(); const t = $(`.tab[data-id="${current}"]`); t && t.focus({ preventScroll:true }); }
+  }
+});
+window.addEventListener('scroll', () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); });   // Silk offsets the page for its toolbar; never let the page drift
+document.addEventListener('focusin', e => { if (e.target.classList && e.target.classList.contains('f') && !e.target.classList.contains('tab')) ensureVisible(e.target); });
+
+/* ---------- Back button (native app) ----------
+   The Android shell asks the page first: true = handled here, false = nothing left to close, so the shell may exit. */
+window.OneGuideBack = () => {
+  if (modalOpen) { closeModal(); return true; }
+  const a = document.activeElement;
+  if (a && !a.classList.contains('tab')) { const t = $(`.tab[data-id="${current}"]`); if (t) { t.focus({ preventScroll:true }); return true; } }
+  return false;
+};
+
+/* ---------- Back button (browser) ----------
+   Silk turns the remote's Back button into browser-history "back", so the page never sees a key.
+   On the first button press we stack a few history entries on top of the page, and always sit on the top one.
+   Each Back press steps down one entry; we handle it, then hop forward to the top again so the next Back is caught too.
+   (Browsers skip history entries a page adds without a button press, so all of them are added at once, during the press.) */
+const TOP = 3;
+let armed = false, exitHint = false, hopping = false;
+function arm() {
+  if (armed || NATIVE) return; armed = true;
+  try { history.replaceState({ og:0 }, ''); for (let i = 1; i <= TOP; i++) history.pushState({ og:i }, ''); } catch (e) { armed = false; }
+}
+['keydown', 'pointerdown', 'click'].forEach(t => document.addEventListener(t, arm, { capture:true, passive:true }));
+window.addEventListener('popstate', e => {
+  if (!armed) return;
+  const p = e.state && typeof e.state.og === 'number' ? e.state.og : 0;
+  if (hopping) { if (p === TOP) hopping = false; return; }       // our own hop back up
+  if (p >= TOP) return;
+  const backUp = () => { hopping = true; setTimeout(() => { hopping = false; }, 800); history.go(TOP - p); };
+  if (modalOpen) { closeModal(); return backUp(); }
+  const tab = $(`.tab[data-id="${current}"]`);
+  if (!document.activeElement.classList.contains('tab')) { if (tab) tab.focus({ preventScroll:true }); return backUp(); }
+  if (!exitHint) { exitHint = true; toast('Press Back again to exit OneGuide'); setTimeout(() => { exitHint = false; }, 3500); return backUp(); }
+  armed = false; history.go(-(p + 1));                           // second Back on the tab bar: really leave
+});
+// pointer mode: highlight whatever card the circle is over
+document.addEventListener('mouseover', e => {
+  const f = e.target.closest && e.target.closest('.f');
+  if (f && !f.classList.contains('tab') && f !== document.activeElement && (!modalOpen || $('#modal').contains(f))) f.focus({ preventScroll:true });
+});
+
+/* ---------- boot ---------- */
+Object.assign(D, S.mode === 'live' ? emptyData() : sample(), { status:{}, errors:{}, loading:S.mode === 'live' });          // render instantly from sample data, then upgrade to live in the background
+updateClock(); setInterval(updateClock, 20000);
+$('.tab').focus({ preventScroll:true }); show('home');
+if (S.mode === 'live') refreshSoon();
+let lastLoad = Date.now();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.mode === 'live' && Date.now() - lastLoad > 5 * 60e3) { lastLoad = Date.now(); refreshSoon(); } });
+})();
+</script>
+</body>
+</html>

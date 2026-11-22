@@ -33,7 +33,7 @@ import java.util.Map;
 public class MainActivity extends Activity {
 
     // The hosted OneGuide page. Redeploying to Netlify updates the app without rebuilding it.
-    static final String START_URL = "https://harmonious-mandazi-4b6b35.netlify.app";
+    static final String START_URL = "https://dtrosch.github.io/oneguide-android/";
 
     // App names to look for, in order of preference. Matching is by the name shown on the Fire TV home screen.
     static final Map<String, String[]> APP_NAMES = new HashMap<>();
