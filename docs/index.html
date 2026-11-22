@@ -136,6 +136,18 @@ h2{font-size:1.9rem;font-weight:700;margin:1.8rem 0 .8rem;display:flex;align-ite
 .btn{font-size:1.5rem;font-weight:700;padding:.8rem 2rem;border-radius:.8rem;background:var(--panel2);color:var(--text);border:none;font-family:inherit}
 .btn.primary{background:var(--accent);color:#1a1200}
 #toast{position:fixed;left:50%;bottom:6rem;transform:translateX(-50%);background:#fff;color:#111;font-size:1.4rem;font-weight:600;padding:.9rem 1.6rem;border-radius:.8rem;display:none;z-index:60;max-width:80rem;text-align:center}
+
+/* League colors: one color per league on the card edge, the label and the section header */
+.card.lgc,.block.lgc{border-left:.7rem solid var(--lg)}
+.lg{font-weight:800;letter-spacing:.03em;color:var(--lg)}
+h2.lgh{align-items:center;border-left:.8rem solid var(--lg);padding-left:1.1rem;margin:1.4rem 0 .5rem}
+h2.lgh .lgn{color:var(--lg)}
+.lgsec .grid3{padding-bottom:.8rem}
+.chips .chip.lgc{border-left:.6rem solid var(--lg)}
+
+/* Search */
+.sbox{font:inherit;font-size:2rem;color:var(--text,#fff);padding:1rem 1.8rem;border-radius:1rem;background:var(--panel);border:.15rem solid var(--line);width:62rem;outline:none}
+.sbox.f:focus{transform:none}
 </style>
 </head>
 <body>
@@ -182,34 +194,36 @@ const F = (tag, attrs, ...kids) => h(tag, { tabindex: '0', ...attrs, class: ('f 
 
 /* ---------- catalog ---------- */
 const SERVICES = [
-  { id:'netflix',  name:'Netflix',     color:'#e50914', tmdb:8 },
+  { id:'netflix',  name:'Netflix',     color:'#e50914', tmdb:8, alt:[1796] },
   { id:'hulu',     name:'Hulu',        color:'#1ce783', tmdb:15,   dark:true },
-  { id:'max',      name:'Max',         color:'#5b3df5', tmdb:1899 },
+  { id:'max',      name:'HBO Max',     color:'#5b3df5', tmdb:1899, alt:[384] },
   { id:'disney',   name:'Disney+',     color:'#1b4fd8', tmdb:337 },
   { id:'paramount',name:'Paramount+',  color:'#0a6cff', tmdb:531 },
-  { id:'peacock',  name:'Peacock',     color:'#f5c518', tmdb:386,  dark:true },
+  { id:'peacock',  name:'Peacock',     color:'#f5c518', tmdb:386, alt:[387], dark:true },
   { id:'espnplus', name:'ESPN+',       color:'#e8334a' },
   { id:'appletv',  name:'Apple TV+',   color:'#c9d1e0', tmdb:350,  dark:true },
-  { id:'prime',    name:'Prime Video', color:'#1fb6ff', tmdb:9,    dark:true },
-  { id:'espn',     name:'ESPN (live TV / Unlimited)', color:'#d0202f' },
+  { id:'prime',    name:'Prime Video', color:'#1fb6ff', tmdb:9, alt:[119, 2100], dark:true },
+  { id:'espn',     name:'ESPN',        color:'#d0202f' },
+  { id:'foxone',   name:'Fox One',     color:'#2b3a8f', nativeV:2 },   // nativeV: needs OneGuide app version 1.1 or newer to be opened from here
   { id:'cable',    name:'Spectrum / Cox', color:'#7a8bb0', app:'your Spectrum TV or Cox Contour app' },
 ];
 const SVC = Object.fromEntries(SERVICES.map(s => [s.id, s]));
+const svcByProvider = pid => SERVICES.find(x => x.tmdb === pid || (x.alt && x.alt.includes(pid)));
 // Live TV channels that come through a cable account (Spectrum / Cox). Names are the way ESPN reports the broadcaster.
 const CHANNELS = [['abc','ABC'],['cbs','CBS'],['nbc','NBC'],['fox','FOX'],['espn','ESPN'],['espn2','ESPN2'],['espnu','ESPNU'],['fs1','FS1'],['tnt','TNT'],['tbs','TBS'],
   ['btn','Big Ten Network'],['secn','SEC Network'],['accn','ACC Network'],['cbssn','CBS Sports Network'],['nflnet','NFL Network']];
 const CH = Object.fromEntries(CHANNELS);
 const CH_BY_NAME = { 'abc':'abc','cbs':'cbs','nbc':'nbc','fox':'fox','espn':'espn','espn2':'espn2','espnu':'espnu','fs1':'fs1','fox sports 1':'fs1','tnt':'tnt','tbs':'tbs',
-  'big ten network':'btn','btn':'btn','sec network':'secn','acc network':'accn','cbs sports network':'cbssn','cbssn':'cbssn','nfl network':'nflnet' };
-const LEAGUES = [
-  { id:'nfl', name:'NFL', short:'NFL',               path:'football/nfl',                 mins:195 },
-  { id:'cfb', name:'College Football', short:'CFB',  path:'football/college-football',    mins:210 },
-  { id:'cbb', name:'College Basketball', short:'NCAAM',path:'basketball/mens-college-basketball', mins:125 },
-  { id:'nba', name:'NBA', short:'NBA',               path:'basketball/nba',               mins:150 },
-  { id:'mlb', name:'MLB', short:'MLB',               path:'baseball/mlb',                 mins:180 },
-  { id:'nhl', name:'NHL', short:'NHL',               path:'hockey/nhl',                   mins:150 },
-  { id:'mls', name:'MLS', short:'MLS',               path:'soccer/usa.1',                 mins:120 },
-  { id:'epl', name:'Premier League', short:'EPL',    path:'soccer/eng.1',                 mins:120 },
+  'big ten network':'btn','btn':'btn','sec network':'secn','secn':'secn','acc network':'accn','accn':'accn','nfln':'nflnet','cbs sports network':'cbssn','cbssn':'cbssn','nfl network':'nflnet' };
+const LEAGUES = [    // one color each; college football and college basketball share a purple-pink family, apart from the NFL (blue) and NBA (teal)
+  { id:'nfl', name:'NFL', short:'NFL',                color:'#4c8dff', path:'football/nfl',                 mins:195 },
+  { id:'cfb', name:'College Football', short:'College FB',   color:'#a77bff', path:'football/college-football',    mins:210 },
+  { id:'cbb', name:'College Basketball', short:'College BB', color:'#ee7ae8', path:'basketball/mens-college-basketball', mins:125 },
+  { id:'nba', name:'NBA', short:'NBA',                color:'#22c7c0', path:'basketball/nba',               mins:150 },
+  { id:'mlb', name:'MLB', short:'MLB',                color:'#e5a56b', path:'baseball/mlb',                 mins:180 },
+  { id:'nhl', name:'NHL', short:'NHL',                color:'#9fb4d3', path:'hockey/nhl',                   mins:150 },
+  { id:'mls', name:'MLS', short:'MLS',                color:'#c4d84a', path:'soccer/usa.1',                 mins:120 },
+  { id:'epl', name:'Premier League', short:'EPL',     color:'#ff7ac6', path:'soccer/eng.1',                 mins:120 },
 ];
 const LG = Object.fromEntries(LEAGUES.map(l => [l.id, l]));
 // college football filter: ESPN conference ids -> our tag
@@ -231,8 +245,13 @@ const FEED = Object.fromEntries(FEEDS.map(f => [f.id, f]));
 // broadcaster name (as ESPN reports it) -> the streaming service that carries it
 const BCAST = {
   'peacock':'peacock','nbc':'peacock','prime video':'prime','amazon prime video':'prime','espn+':'espnplus',
-  'paramount+':'paramount','cbs':'paramount','max':'max','tnt':'max','tbs':'max','trutv':'max',
-  'apple tv+':'appletv','apple tv':'appletv','espn':'espn','espn2':'espn','espnu':'espn','abc':'espn','netflix':'netflix',
+  'paramount+':'paramount','cbs':'paramount','max':'max','hbo max':'max','tnt':'max','tbs':'max','trutv':'max',
+  'apple tv+':'appletv','apple tv':'appletv','netflix':'netflix',
+  // the ESPN family and ABC all open in the ESPN app (it signs in with the Spectrum login)
+  'espn':'espn','espn2':'espn','espnu':'espn','espn3':'espn','espnews':'espn','abc':'espn',
+  'sec network':'espn','secn':'espn','acc network':'espn','accn':'espn','longhorn network':'espn',
+  // FOX, FS1 and Big Ten Network are all in Fox One
+  'fox':'foxone','fs1':'foxone','fs2':'foxone','fox sports 1':'foxone','fox sports 2':'foxone','fox sports':'foxone','big ten network':'foxone','btn':'foxone',
   'accnx':'espnplus','secn+':'espnplus','acc network extra':'espnplus',
 };
 
@@ -242,7 +261,7 @@ const KEY = 'oneguide.v1', KEYSTORE = 'oneguide.tmdbkey';
 const getKey = () => { try { return (localStorage.getItem(KEYSTORE) || '').trim(); } catch (e) { return ''; } };
 const setKey = v => { try { v ? localStorage.setItem(KEYSTORE, v) : localStorage.removeItem(KEYSTORE); } catch (e) {} };
 const DEFAULTS = {
-  services:['netflix','hulu','max','disney','paramount','peacock','espnplus','appletv','prime','cable'],
+  services:['netflix','hulu','max','disney','paramount','peacock','espnplus','appletv','prime','espn','foxone','cable'],
   channels:CHANNELS.map(c => c[0]),   // live channels your cable account includes
   leagues:['nfl','cfb','cbb','nba'],
   cfb:['top25','big10','acc','sec'],   // which college football games to list
@@ -254,9 +273,9 @@ const DEFAULTS = {
   margin: NATIVE ? 0 : 2,     // bottom safe margin step (Silk's toolbar covers the bottom of the page; the native app has no toolbar)
   scale:2,      // text size step (2 = Large, +10%)
   showToday:false,   // home row: 'New episodes today'
-  v:4,
+  v:5,
 };
-let S = (() => { try { const saved = JSON.parse(localStorage.getItem(KEY) || '{}'), x = { ...DEFAULTS, ...saved }; if (!saved.v || saved.v < 2) x.scale = 2; if (!saved.v || saved.v < 3) { x.services = [...new Set([...(saved.services || DEFAULTS.services), 'prime', 'cable'])]; } if (!saved.v || saved.v < 4) x.showToday = false; x.v = 4; return x; } catch (e) { return { ...DEFAULTS }; } })();
+let S = (() => { try { const saved = JSON.parse(localStorage.getItem(KEY) || '{}'), x = { ...DEFAULTS, ...saved }; if (!saved.v || saved.v < 2) x.scale = 2; if (!saved.v || saved.v < 3) { x.services = [...new Set([...(saved.services || DEFAULTS.services), 'prime', 'cable'])]; } if (!saved.v || saved.v < 4) x.showToday = false; if (!saved.v || saved.v < 5) x.services = [...new Set([...(x.services || []), 'espn', 'foxone'])]; x.v = 5; return x; } catch (e) { return { ...DEFAULTS }; } })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const SIDES = [2.5, 4.5, 6.5], MARGINS = [0, 4, 8, 12], SCALES = [[.85, 'Small'], [1, 'Normal'], [1.1, 'Large'], [1.2, 'Larger'], [1.3, 'Extra large']];
 function applyDisplay() {
@@ -269,6 +288,10 @@ function applyDisplay() {
 }
 applyDisplay();
 const owned = id => S.services.includes(id);
+// Which streaming apps the Fire Cube really has (native app only). In a plain browser nothing is checked.
+const NATIVE_V = NATIVE ? (typeof window.OneGuideNative.apiVersion === 'function' ? (+window.OneGuideNative.apiVersion() || 1) : 1) : 99;
+const INST = (() => { if (!NATIVE) return null; try { return JSON.parse(window.OneGuideNative.detect()) || {}; } catch (e) { return null; } })();
+const installed = id => !INST || !!INST[id];
 
 /* ---------- time ---------- */
 const SLOT = 30 * 60e3, SLOTS = 12, PX = 17;       // guide: 12 half-hour columns, 17rem each
@@ -293,10 +316,11 @@ function sample() {
     appletv:  [['Orchard Street','New episode · S2 E5',45],['Deep Signal','New episode · S1 E2',55],['Meridian','Movie premiere',110]],
     prime:    [['The Foundry','New episode · S3 E4',55],['Live: Thursday-style Game','Live · NBA',150],['Quiet Rivers','Movie',100]],
     espn:     [['Live: Saturday Primetime','Live · college football',210],['SportsCenter','Studio',60],['Live: Bowl Preview','Studio',90]],
+    foxone:   [['Live: Big Ten Saturday','Live · college football',210],['Live: FOX NFL Sunday','Live · NFL',195],['Fox Sports Tonight','Studio',60]],
   };
   const guide = []; let i = 0;
   for (const s of SERVICES) {
-    const pool = P[s.id]; i++;
+    const pool = P[s.id]; i++; if (!pool) continue;
     let cur = t0 - ((i * 19) % 25) * 60e3, k = i % pool.length;
     while (cur < t0 + SLOTS * SLOT) {
       const [title, sub, mins] = pool[k % pool.length];
@@ -421,7 +445,7 @@ function guideFromGames(games) {
   for (const g of games) {
     if (g.state === 'post' || !gameOk(g)) continue;
     for (const o of watchOptions(g)) if (o.svc && owned(o.svc.id)) out.push({ id:`${g.id}-${o.svc.id}`, service:o.svc.id,
-      title:`${g.away.name} at ${g.home.name}`, kind:'live', sub:`${LG[g.league].name} · via ${o.ch || o.label}`, start:g.start, end:g.start + LG[g.league].mins * 60e3,
+      title:`${g.away.name} at ${g.home.name}`, kind:'live', league:g.league, sub:`${LG[g.league].name} · via ${o.ch || o.label}`, start:g.start, end:g.start + LG[g.league].mins * 60e3,
       overview:`${LG[g.league].name}. Broadcast: ${g.broadcasts.join(', ')}.` });
   }
   return { t0, guide:out };
@@ -445,17 +469,42 @@ const mark = key => h('span', { class:'tag ' + (D.status[key] === 'live' ? 'live
 const onAir = ev => ev.start <= Date.now() && ev.end > Date.now();
 const evChip = ev => onAir(ev) ? (ev.kind === 'live' ? h('span', { class:'chip live' }, 'LIVE') : h('span', { class:'chip new' }, 'NEW')) : h('span', { class:'chip' }, fmtT(ev.start));
 const badge = svc => h('span', { class:'badge', style:`background:${svc.color};color:${svc.dark ? '#111' : '#fff'}` }, svc.name);
+const optApp = o => !!o.svc && o.svc.id !== 'cable';
+const optUsable = o => optApp(o) && o.owned && installed(o.svc.id);       // an app of his that this Fire Cube can open
+// order: usable app, then Spectrum/Cox, then his apps that were not found, then others
+const optRank = o => optUsable(o) ? 0 : (o.svc && o.svc.id === 'cable' && o.owned) ? 1 : (optApp(o) && o.owned) ? 2 : optApp(o) ? 3 : o.svc ? 5 : 4;
+const viaOf = o => o.ch || (o.svc && o.label && o.label.toLowerCase() !== o.svc.name.toLowerCase() ? o.label : '');
+const optNote = op => {
+  const via = viaOf(op) ? ' · ' + viaOf(op) : '';
+  if (!op.owned) return op.note || (op.svc ? 'Not on your services' + via : 'Needs live TV or antenna');
+  const miss = optApp(op) && !installed(op.svc.id) ? (op.svc.nativeV > NATIVE_V ? ' · update the OneGuide app to open it' : ' · app not found on this Fire Cube') : '';
+  return '✓ On your services' + via + miss;
+};
 function watchOptions(g) {
-  const out = [];
-  for (const n of g.broadcasts || []) { const id = BCAST[n.toLowerCase()], svc = id ? SVC[id] : null;
+  let out = [];
+  for (const n of g.broadcasts || []) { const id = BCAST[n.toLowerCase().trim()], svc = id ? SVC[id] : null;
+    if (svc && out.some(o => o.svc === svc)) continue;                // ESPN2 and ABC on one game are both just "the ESPN app"
     out.push({ svc, label:n, owned: !!svc && owned(svc.id) }); }
-  for (const n of g.broadcasts || []) { const ch = CH_BY_NAME[n.toLowerCase()];            // the same game may also be on a cable channel
+  for (const n of g.broadcasts || []) { const ch = CH_BY_NAME[n.toLowerCase().trim()];            // the same game may also be on a cable channel
     if (ch && !out.some(o => o.ch === CH[ch])) out.push({ svc:SVC.cable, label:n, ch:CH[ch], owned: owned('cable') && S.channels.includes(ch) }); }
-  return out.filter(o => o.svc || !out.some(x => x.ch && x.label === o.label));     // drop the bare 'needs live TV' line once a cable channel covers it
+  out = out.filter(o => o.svc || !out.some(x => x.ch && x.label === o.label));     // drop the bare 'needs live TV' line once a cable channel covers it
+  if (out.some(optUsable)) out = out.filter(o => !o.svc || o.svc.id !== 'cable');   // an app can show it, so Spectrum / Cox is not mentioned at all
+  return out.map((o, i) => [o, i]).sort((a, b) => optRank(a[0]) - optRank(b[0]) || a[1] - b[1]).map(x => x[0]);
 }
+// "Open ..." buttons for a detail sheet: his usable apps first (up to 3); Spectrum / Cox only when no app will do
+function openChoices(options) {
+  const seen = new Set(), key = x => x.svc.id === 'espnplus' ? 'espn' : x.svc.id;
+  const mine = [...options].sort((a, b) => optRank(a) - optRank(b)).filter(x => x.owned && x.svc && !seen.has(key(x)) && seen.add(key(x)));
+  const good = mine.filter(optUsable);
+  return (good.length ? good : mine).slice(0, 3);
+}
+const stRank = { in:0, pre:1, post:2 }, top25 = g => (g.tags && g.tags.includes('top25')) ? 1 : 0;
+const stSort = (a, b) => stRank[a.state] - stRank[b.state] || top25(b) - top25(a) || a.start - b.start;     // live, then upcoming, then final
+const lgStyle = id => '--lg:' + (LG[id] ? LG[id].color : '#9aa7c2');
 const toast = (() => { let t; return msg => { const el = $('#toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(t); t = setTimeout(() => el.style.display = 'none', 4500); }; })();
 function launch(svc, item) {
   // A browser page can't start other apps. A native wrapper can expose window.OneGuideNative.launch(serviceId, title).
+  if (NATIVE && svc.nativeV > NATIVE_V) return toast('Update the OneGuide app to open ' + svc.name + ' from here. For now, open it from your Fire Cube home screen.');
   if (NATIVE) { let r = ''; try { r = window.OneGuideNative.launch(svc.id, (item && item.title) || ''); } catch (e) { r = 'Could not open ' + svc.name + '.'; } return toast(r || 'Opening ' + svc.name + '...'); }
   toast(svc.app ? `A web page can't open apps yet. Open ${svc.app} on your Fire Cube (or hold the mic button and say "Alexa, open Spectrum TV").` : `A web page can't open apps yet. Hold the mic button and say "Alexa, open ${svc.name}".`);
 }
@@ -463,16 +512,16 @@ function launch(svc, item) {
 /* ---------- modal ---------- */
 let modalOpen = false, lastFocus = null;
 function openDetail(o) {
-  const own = o.options.find(x => x.owned && x.svc);
+  const options = [...o.options].sort((a, b) => optRank(a) - optRank(b)), opens = openChoices(options);
   const sheet = h('div', { class:'sheet' },
     h('div', { class:'row', style:'justify-content:flex-start' }, ...(o.chips || [])),
     h('div', { class:'ttl' }, o.title), h('div', { class:'sub' }, o.sub || ''),
     o.overview ? h('div', { class:'ov' }, o.overview) : null,
-    h('div', null, ...o.options.map(op => h('div', { class:'opt ' + (op.owned ? 'own' : '') },
+    h('div', null, ...options.map(op => h('div', { class:'opt ' + (op.owned ? 'own' : '') },
       op.svc ? badge(op.svc) : h('span', { class:'badge plain' }, op.label),
-      h('span', { class:'ownnote' }, op.owned ? '✓ On your services' + (op.ch ? ' · ' + op.ch : '') : op.svc ? 'Not on your services' + (op.ch ? ' · ' + op.ch : '') : 'Needs live TV or antenna')))),
+      h('span', { class:'ownnote' }, optNote(op))))),
     h('div', { class:'tip' }, 'Fire Cube shortcut: hold the mic button and say ', h('b', null, `"Alexa, ${o.voice || 'watch ' + o.title}"`)),
-    h('div', { class:'btns' }, own ? F('button', { class:'btn primary', onclick:() => launch(own.svc, o) }, 'Open ' + own.svc.name) : null,
+    h('div', { class:'btns' }, ...opens.map((x, i) => F('button', { class:'btn' + (i ? '' : ' primary'), onclick:() => launch(x.svc, o) }, 'Open ' + x.svc.name)),
       F('button', { class:'btn', onclick:closeModal }, 'Close')));
   lastFocus = document.activeElement; modalOpen = true;
   const m = $('#modal'); m.replaceChildren(sheet); m.classList.add('open');
@@ -483,7 +532,8 @@ function closeModal() {
   if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll:true });
 }
 const showDetail = sh => openDetail({ title:sh.title, sub:`${sh.type}${sh.year ? ' · ' + sh.year : ''}${sh.rating ? ' · ★ ' + sh.rating : ''}`, overview:sh.overview, chips:svcsOf(sh).map(id => badge(SVC[id])),
-  options:svcsOf(sh).map(id => ({ svc:SVC[id], owned:owned(id) })) });
+  options:[...svcsOf(sh).map(id => ({ svc:SVC[id], owned:owned(id) })), ...(sh.other || []).map(n => ({ label:n, owned:false, note:'Not on your services' })),
+    ...(sh.known && !svcsOf(sh).length && !(sh.other || []).length ? [{ label:'Streaming', owned:false, note:'Not on a subscription service right now (maybe rent or buy)' }] : [])] });
 const eventDetail = ev => {
   openDetail({ title:ev.title, sub:`${fmtT(ev.start)} – ${fmtT(ev.end)} · ${ev.sub || ''}`, overview:ev.overview,
     chips:[evChip(ev)], options:[{ svc:SVC[ev.service], owned:owned(ev.service) }] }); };
@@ -495,28 +545,84 @@ const gameDetail = g => { const o = watchOptions(g); const any = o.find(x => x.o
 /* ---------- cards ---------- */
 function statusChip(g) { return g.state === 'in' ? h('span', { class:'chip live' }, 'LIVE') : g.state === 'post' ? h('span', { class:'chip done' }, 'FINAL') : h('span', { class:'chip' }, 'UPCOMING'); }
 const eventCard = ev => {
-  return F('div', { class:'card event', onclick:() => eventDetail(ev) },
+  const lg = ev.league ? LG[ev.league] : null;
+  return F('div', { class:'card event' + (lg ? ' lgc' : ''), style:lg ? lgStyle(lg.id) : null, onclick:() => eventDetail(ev) },
     h('div', { class:'row' }, evChip(ev), badge(SVC[ev.service])),
-    h('div', { class:'ttl' }, ev.title), h('div', { class:'sub' }, ev.sub)); };
+    h('div', { class:'ttl' }, ev.title),
+    h('div', { class:'sub' }, lg ? [h('span', { class:'lg' }, lg.name), ev.sub.slice(lg.name.length)] : ev.sub)); };
 const svcsOf = sh => sh.services || [sh.service];
 const dedupe = list => { const m = new Map();      // the same title on several of your services becomes one card
   for (const x of list) { const k = x.type + '|' + String(x.title).toLowerCase(), e = m.get(k);
     if (e) { if (!e.services.includes(x.service)) e.services.push(x.service); e.pop = Math.max(e.pop || 0, x.pop || 0); } else m.set(k, { ...x, services:[x.service] }); }
   return [...m.values()]; };
 const showCard = sh => F('div', { class:'card poster', style:`background-image:${sh.poster ? `url(${sh.poster}),` : ''}${grad(sh.title)}`, onclick:() => showDetail(sh) },
-  h('div', { class:'bgs' }, svcsOf(sh).map(id => badge(SVC[id]))), h('div', { class:'cap' }, sh.title));
+  h('div', { class:'bgs' }, (sh.badges || svcsOf(sh)).map(id => badge(SVC[id])), (!(sh.badges || svcsOf(sh)).length ? (sh.other || []).slice(0, 2).map(n => h('span', { class:'badge plain' }, n)) : [])), h('div', { class:'cap' }, sh.title));
 function gameCard(g, big) {
-  const o = watchOptions(g), mine = o.find(x => x.owned);
+  const o = watchOptions(g), mine = o.find(x => x.owned), lg = LG[g.league], via = mine ? viaOf(mine) : '';
   const win = g.state === 'post' && g.home.score !== g.away.score ? (g.home.score > g.away.score ? 'home' : 'away') : null;
   const team = (t, side) => h('div', { class:'team ' + (win && win !== side ? 'lose' : '') }, h('span', null, t.name), h('span', { class:'sc' }, t.score == null ? '' : t.score));
-  return F('div', { class:'card game' + (big ? ' big' : ''), onclick:() => gameDetail(g) },
-    h('div', { class:'row' }, statusChip(g), h('span', { class:'sub' }, `${big ? LG[g.league].name : LG[g.league].short} · ${g.detail}`)),
+  return F('div', { class:'card game lgc' + (big ? ' big' : ''), style:lgStyle(g.league), onclick:() => gameDetail(g) },
+    h('div', { class:'row' }, statusChip(g), h('span', { class:'sub' }, h('span', { class:'lg' }, lg.short), ' · ' + g.detail)),
     team(g.away, 'away'), team(g.home, 'home'),
-    h('div', { class:'watch' }, mine ? h('span', null, 'Watch on ', h('b', null, mine.svc.name + (mine.ch ? ' (' + mine.ch + ')' : '') + ' ✓')) : o.length ? 'Not on your services: ' + [...new Set(o.map(x => x.label))].join(', ') : 'No broadcast listed'));
+    h('div', { class:'watch' }, mine ? h('span', null, 'Watch on ', h('b', null, mine.svc.name + (via ? ' (' + via + ')' : '') + ' ✓')) : o.length ? 'Not on your services: ' + [...new Set(o.map(x => x.label))].join(', ') : 'No broadcast listed'));
 }
 const newsCard = n => F('div', { class:'card headline', onclick:() => toast('Open this story on your phone or the news app. Full articles are not shown here.') },
   h('div', { class:'sub' }, `${n.source} · ${ago(n.time)}`), h('div', { class:'ttl' }, n.title));
 const rail = (title, items, extra) => h('section', null, h('h2', null, title, extra || null), h('div', { class:'track' }, items));
+
+/* ---------- search ---------- */
+const SR = { q:'', n:0, res:null, busy:false, err:'' }, PROV = new Map();
+const tok = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9+ ]+/g, ' ').split(/\s+/).filter(Boolean);
+const hasAll = (text, q) => { const t = ' ' + tok(text).join(' '); return q.every(w => t.includes(' ' + w)); };    // every typed word starts a word in the text
+async function providersFor(kind, id, K) {
+  const k = kind + id; if (PROV.has(k)) return PROV.get(k);
+  const d = await getJSON(`https://api.themoviedb.org/3/${kind}/${id}/watch/providers?api_key=${K}`).catch(() => null);
+  if (!d) return null;
+  const r = (d.results && d.results[CONFIG.region]) || {}, v = [...(r.flatrate || []), ...(r.free || []), ...(r.ads || [])];
+  PROV.set(k, v); return v;
+}
+async function searchTitles(q) {
+  const K = getKey(), qt = tok(q);
+  if (!K || S.mode !== 'live') return { items:dedupe(D.shows.filter(x => hasAll(x.title, qt))).slice(0, 18).map(x => ({ ...x, other:[], known:true })) };    // no key or sample mode: search what is already loaded
+  const IMG = 'https://image.tmdb.org/t/p/w342';
+  const d = await getJSON(`https://api.themoviedb.org/3/search/multi?api_key=${K}&query=${encodeURIComponent(q)}&include_adult=false&language=en-US&page=1`);
+  const hits = (d.results || []).filter(x => (x.media_type === 'movie' || x.media_type === 'tv') && (x.poster_path || x.vote_count > 0)).slice(0, 12);
+  const items = await Promise.all(hits.map(async x => {
+    const prov = await providersFor(x.media_type, x.id, K), ids = [], other = [];
+    for (const p of prov || []) { const sv = svcByProvider(p.provider_id); if (sv) { if (!ids.includes(sv.id)) ids.push(sv.id); } else if (!other.includes(p.provider_name)) other.push(p.provider_name); }
+    return { id:`tmdb-${x.media_type}-${x.id}`, title:x.title || x.name, year:(x.release_date || x.first_air_date || '').slice(0, 4), type:x.media_type === 'tv' ? 'Series' : 'Movie',
+      poster:x.poster_path ? IMG + x.poster_path : null, overview:x.overview || '', rating:x.vote_average ? Math.round(x.vote_average * 10) / 10 : null,
+      services:ids, other:other.slice(0, 4), known:!!prov };
+  }));
+  return { items };
+}
+async function doSearch(q) {
+  if (q === SR.q && (SR.busy || SR.res)) return;
+  SR.q = q; const n = ++SR.n; SR.err = '';
+  if (tok(q).join('').length < 2) { SR.res = null; SR.busy = false; return paintSearch(); }
+  SR.busy = true; SR.res = null; paintSearch();
+  let res = null, err = '';
+  try { res = await searchTitles(q); } catch (e) { err = String((e && e.message) || e); }
+  if (n !== SR.n) return;                       // a newer search has started
+  SR.busy = false; SR.res = res; SR.err = err; paintSearch();
+}
+function paintSearch(out) {
+  out = out || $('#sres'); if (!out) return;
+  const qt = tok(SR.q), kids = [];
+  if (qt.join('').length < 2) { out.replaceChildren(h('div', { class:'note', style:'margin-top:1.2rem;font-size:1.4rem' }, 'Type at least 2 letters. Tip: on the on-screen keyboard, press the microphone key and say the name. The Fire TV phone app also works as a keyboard.')); return; }
+  const items = SR.res ? SR.res.items : [], mine = items.filter(x => x.services.some(owned)), rest = items.filter(x => !x.services.some(owned));
+  const games = D.games.filter(g => hasAll(g.home.name + ' ' + g.away.name, qt)).sort(stSort).slice(0, 9), news = D.news.filter(n => hasAll(n.title, qt)).slice(0, 6);
+  const poster = (x, badges) => { const c = showCard(badges ? { ...x, badges } : x); c.classList.add('in-grid'); return c; };
+  if (SR.busy) kids.push(h('div', { class:'note', style:'margin-top:1.2rem' }, 'Searching...'));
+  if (mine.length) kids.push(h('h2', null, 'On your services'), h('div', { class:'grid6' }, mine.map(x => poster(x, x.services.filter(owned)))));
+  if (games.length) kids.push(h('h2', null, 'Games', h('span', { class:'hint' }, 'from the scoreboards loaded now')), h('div', { class:'grid3' }, games.map(g => gameCard(g, true))));
+  if (news.length) kids.push(h('h2', null, 'Headlines'), h('div', { class:'grid3' }, news.map(newsCard)));
+  if (rest.length) kids.push(h('h2', null, 'Not on your services'), h('div', { class:'grid6' }, rest.map(x => poster(x))));
+  if (S.mode === 'live' && !getKey()) kids.push(h('div', { class:'note', style:'margin-top:1rem' }, 'Add your TMDB key in Settings to search every show and movie. Right now only titles already loaded are searched.'));
+  if (SR.err) kids.push(h('div', { class:'note', style:'margin-top:1rem' }, 'Could not search shows (' + SR.err + ').'));
+  if (!SR.busy && !kids.length) kids.push(h('div', { class:'note', style:'margin-top:1.2rem;font-size:1.4rem' }, 'Nothing found for "' + SR.q + '".'));
+  out.replaceChildren(...kids);
+}
 
 /* ---------- screens ---------- */
 const screens = {
@@ -525,7 +631,10 @@ const screens = {
     const evs = D.guide.filter(e => owned(e.service) && e.end > now && e.start < now + 150 * 60e3)
       .sort((a, b) => (b.start <= now) - (a.start <= now) || a.start - b.start);
     const hero = evs[0];
-    const games = [...D.games].filter(gameOk).sort((a, b) => (b.state === 'in') - (a.state === 'in') || (b.tags && b.tags.includes('top25')) - (a.tags && a.tags.includes('top25')) || a.start - b.start).slice(0, 8);
+    let firstLg = true;
+    const lgRails = LEAGUES.map(l => { const L = D.games.filter(g => g.league === l.id && gameOk(g)).sort(stSort).slice(0, 8); if (!L.length) return null;
+      const sec = h('section', null, h('h2', { class:'lgh', style:lgStyle(l.id) }, h('span', { class:'lgn' }, l.name), h('span', { class:'hint' }, 'Scores & games'), firstLg ? mark('sports') : null), h('div', { class:'track' }, L.map(g => gameCard(g))));
+      firstLg = false; return sec; }).filter(Boolean);
     const svcs = SERVICES.filter(s => owned(s.id) && D.shows.some(x => x.service === s.id));
     const todayL = S.showToday ? dedupe((D.today || []).filter(x => owned(x.service))).slice(0, 14) : [], freshL = dedupe((D.fresh || []).filter(x => owned(x.service))).slice(0, 14),
       movieL = dedupe(D.shows.filter(x => x.type === 'Movie' && owned(x.service))).sort((a, b) => (b.pop || 0) - (a.pop || 0)).slice(0, 14);
@@ -537,10 +646,10 @@ const screens = {
       todayL.length ? rail('New episodes today', todayL.map(showCard), mark('shows')) : null,
       movieL.length ? rail('Popular movies on your services', movieL.map(showCard), mark('shows')) : null,
       freshL.length ? rail('New on your services', freshL.map(showCard), mark('shows')) : null,
-      games.length ? rail('Scores & games', games.map(g => gameCard(g)), mark('sports')) : null,
+      lgRails,
       svcs.map(s => rail('Popular on ' + s.name, D.shows.filter(x => x.service === s.id).slice(0, 10).map(showCard), mark('shows'))),
       D.news.length ? rail('Headlines', D.news.slice(0, 8).map(newsCard), mark('news')) : null,
-      (!D.loading && !hero && !todayL.length && !freshL.length && !movieL.length && !games.length && !svcs.length && !D.news.length) ? h('div', { class:'note', style:'margin-top:2rem' }, 'Nothing to show yet. Open Settings, then Data status, to see what could not be loaded.') : null,
+      (!D.loading && !hero && !todayL.length && !freshL.length && !movieL.length && !lgRails.length && !svcs.length && !D.news.length) ? h('div', { class:'note', style:'margin-top:2rem' }, 'Nothing to show yet. Open Settings, then Data status, to see what could not be loaded.') : null,
       D.loading ? h('div', { class:'note', style:'margin-top:2rem' }, 'Loading your guide...') : null);
   },
   guide() {
@@ -552,7 +661,7 @@ const screens = {
       return h('div', { class:'g-row' }, h('div', { class:'g-label' }, badge(s)),
         h('div', { class:'g-lane', style:`width:${W}rem` }, evs.length ? evs.map(e => {
           const a = Math.max(e.start, t0), b = Math.min(e.end, tEnd), live = e.kind === 'live' && e.start <= now && e.end > now;
-          return F('div', { class:'block' + (live ? ' live' : ''), style:`left:${(a - t0) / SLOT * PX}rem;width:${(b - a) / SLOT * PX - .3}rem`, onclick:() => eventDetail(e) },
+          return F('div', { class:'block' + (live ? ' live' : '') + (e.league ? ' lgc' : ''), style:(e.league ? lgStyle(e.league) + ';' : '') +`left:${(a - t0) / SLOT * PX}rem;width:${(b - a) / SLOT * PX - .3}rem`, onclick:() => eventDetail(e) },
             h('div', { class:'bt' }, e.title), h('div', { class:'bs' }, `${fmtT(e.start)} · ${e.sub}`));
         }) : h('div', { class:'g-empty' }, 'Nothing scheduled on this service in this window')));
     });
@@ -575,15 +684,20 @@ const screens = {
     return h('div', null, h('h1', null, 'Shows ', mark('shows')), h('div', { class:'sub' }, 'Popular titles on the services you subscribe to. Press OK on one for details.'), chips, grid);
   },
   sports() {
-    let filter = 'all'; const grid = h('div', { class:'grid3' }), chips = h('div', { class:'chips' });
+    let filter = 'all'; const box = h('div'), chips = h('div', { class:'chips' });
     const draw = () => {
-      chips.replaceChildren(...['all', ...S.leagues].map(id => F('div', { class:'chip' + (filter === id ? ' on' : ''), onclick:() => { filter = id; draw(); chips.children[['all', ...S.leagues].indexOf(id)].focus(); } }, id === 'all' ? 'All' : LG[id].name)));
-      const list = D.games.filter(g => gameOk(g) && (filter === 'all' || g.league === filter))
-        .sort((a, b) => ({ in:0, pre:1, post:2 })[a.state] - ({ in:0, pre:1, post:2 })[b.state] || a.start - b.start);
-      grid.replaceChildren(...(list.length ? list.map(g => gameCard(g, true)) : [h('div', { class:'note' }, D.loading ? 'Loading...' : S.mode === 'live' && D.status.sports !== 'live' ? 'Could not load live scores' + (D.errors.sports ? ' (' + D.errors.sports + ')' : '') + '.' : 'No games right now for these leagues. Add more in Settings.')]));
+      const ids = ['all', ...S.leagues];
+      chips.replaceChildren(...ids.map(id => F('div', { class:'chip' + (id !== 'all' ? ' lgc' : '') + (filter === id ? ' on' : ''), style:id === 'all' ? null : lgStyle(id), onclick:() => { filter = id; draw(); chips.children[ids.indexOf(id)].focus(); } }, id === 'all' ? 'All' : LG[id].name)));
+      const secs = LEAGUES.filter(l => S.leagues.includes(l.id) && (filter === 'all' || filter === l.id)).map(l => {
+        const list = D.games.filter(g => g.league === l.id && gameOk(g)).sort(stSort); if (!list.length) return null;
+        const live = list.filter(g => g.state === 'in').length;
+        return h('div', { class:'lgsec' }, h('h2', { class:'lgh', style:lgStyle(l.id) }, h('span', { class:'lgn' }, l.name), h('span', { class:'hint' }, list.length + (list.length === 1 ? ' game' : ' games') + (live ? ' · ' + live + ' live' : ''))),
+          h('div', { class:'grid3' }, list.map(g => gameCard(g, true))));
+      }).filter(Boolean);
+      box.replaceChildren(...(secs.length ? secs : [h('div', { class:'note' }, D.loading ? 'Loading...' : S.mode === 'live' && D.status.sports !== 'live' ? 'Could not load live scores' + (D.errors.sports ? ' (' + D.errors.sports + ')' : '') + '.' : 'No games right now for these leagues. Add more in Settings.')]));
     };
     draw();
-    return h('div', null, h('h1', null, 'Sports ', mark('sports')), h('div', { class:'sub' }, 'Green means it is streaming on a service you subscribe to.'), chips, grid);
+    return h('div', null, h('h1', null, 'Sports ', mark('sports')), h('div', { class:'sub' }, 'Grouped by league, each with its own color. Green means it is streaming on a service you subscribe to.'), chips, box);
   },
   news() {
     let filter = 'all'; const list = h('div', { class:'nlist' }), chips = h('div', { class:'chips' }), reader = h('div', { class:'reader' });
@@ -597,6 +711,15 @@ const screens = {
     };
     draw();
     return h('div', null, h('h1', null, 'News ', mark('news')), chips, h('div', { class:'news' }, list, reader));
+  },
+  search() {
+    const out = h('div', { id:'sres' });
+    let t;
+    const input = F('input', { type:'text', class:'sbox', placeholder:'Select here, then speak or type a title or team', autocomplete:'off', autocapitalize:'off', spellcheck:'false', value:SR.q,
+      oninput:() => { clearTimeout(t); t = setTimeout(() => doSearch(input.value.trim()), 500); },
+      onchange:() => { clearTimeout(t); doSearch(input.value.trim()); } });
+    paintSearch(out);
+    return h('div', null, h('h1', null, 'Search'), h('div', { class:'sub' }, 'Find a show, movie or team. Titles on your own services come first.'), h('div', { style:'margin:1rem 0 .4rem' }, input), out);
   },
   settings() {
     const toggle = (label, on, set) => { const el = F('div', { class:'toggle' + (on() ? ' on' : '') }); const paint = () => { el.classList.toggle('on', on()); el.replaceChildren(h('span', { class:'mk' }, on() ? '✓' : ''), label); };
@@ -619,7 +742,7 @@ const screens = {
       sec('My teams', FAV_OPTS.map(([id, n]) => toggle(n, list('favs', id), flip('favs', id))), 'Games for these teams always show up, in any league, marked with a star.'),
       S.leagues.includes('cfb') ? sec('College football games', CFB_OPTS.map(([id, n]) => toggle(n, list('cfb', id), flip('cfb', id))), 'Pick which college football games are listed. A game shows if either team matches. Ranked teams show their rank, like #12.') : null,
       sec('News sources', FEEDS.map(f => toggle(`${f.cat}: ${f.name}`, list('feeds', f.id), flip('feeds', f.id)))),
-      NATIVE ? sec('Apps on this Fire Cube', [], (() => { try { const f = JSON.parse(window.OneGuideNative.detect()), ids = SERVICES.map(x => x.id); return 'Found: ' + (ids.filter(i => f[i]).map(i => SVC[i].name + ' (' + f[i] + ')').join(', ') || 'none') + '.   Not found: ' + (ids.filter(i => !f[i]).map(i => SVC[i].name).join(', ') || 'none') + '.'; } catch (e) { return 'Could not check installed apps.'; } })()) : null,
+      NATIVE ? sec('Apps on this Fire Cube', [], (() => { try { const f = JSON.parse(window.OneGuideNative.detect()), ids = SERVICES.map(x => x.id); return 'Found: ' + (ids.filter(i => f[i]).map(i => SVC[i].name + ' (' + f[i] + ')').join(', ') || 'none') + '.   Not found: ' + (ids.filter(i => !f[i]).map(i => SVC[i].name + (SVC[i].nativeV > NATIVE_V ? ' (needs the next OneGuide app update)' : '')).join(', ') || 'none') + '.'; } catch (e) { return 'Could not check installed apps.'; } })()) : null,
       sec('Data status', [], S.mode !== 'live' ? 'Live data is off, so everything shown is sample data.' :
         [['TV shows', 'shows'], ['Sports', 'sports'], ['News', 'news'], ['Weather', 'weather']].map(([n, k]) => `${n}: ${D.status[k] === 'live' ? 'live' : D.loading ? 'loading' : 'could not load' + (D.errors[k] ? ' (' + (D.errors[k] === '401' || D.errors[k] === 401 ? 'key rejected - re-enter the TMDB key in Settings' : D.errors[k]) + ')' : '')}.`).join('   ')),
       sec('Data', [toggle('Use live data (otherwise sample data)', () => S.mode === 'live', () => { S.mode = S.mode === 'live' ? 'sample' : 'live'; })],
@@ -629,7 +752,7 @@ const screens = {
 };
 
 /* ---------- shell ---------- */
-const TABS = [['home','Home'], ['guide','Guide'], ['shows','Shows'], ['sports','Sports'], ['news','News'], ['settings','Settings']];
+const TABS = [['home','Home'], ['guide','Guide'], ['shows','Shows'], ['sports','Sports'], ['news','News'], ['search','Search'], ['settings','Settings']];
 let current = 'home';
 function show(id) {
   current = id; $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));

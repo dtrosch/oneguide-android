@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
         APP_NAMES.put("espn", new String[]{"espn"});
         APP_NAMES.put("appletv", new String[]{"apple tv+", "apple tv"});
         APP_NAMES.put("prime", new String[]{"prime video", "amazon prime video"});
+        APP_NAMES.put("foxone", new String[]{"fox one", "fox sports"});
         APP_NAMES.put("cable", new String[]{"spectrum tv", "spectrum", "cox contour", "contour", "cox"});
     }
 
@@ -201,6 +202,12 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isNative() {
             return true;
+        }
+
+        /** Version of this bridge. The page uses it to tell whether the installed app knows about newer streaming apps (2 = Fox One). */
+        @JavascriptInterface
+        public int apiVersion() {
+            return 2;
         }
 
         /** JSON like {"netflix":"netflix","hulu":"hulu"} for every service whose app is installed. */
