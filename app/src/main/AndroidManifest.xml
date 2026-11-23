@@ -36,7 +36,10 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="landscape">
-            <!-- TV-only entry: the Fire TV home row then shows the wide banner, not the square icon -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />

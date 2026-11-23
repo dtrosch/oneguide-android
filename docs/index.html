@@ -505,7 +505,7 @@ const toast = (() => { let t; return msg => { const el = $('#toast'); el.textCon
 function launch(svc, item) {
   // A browser page can't start other apps. A native wrapper can expose window.OneGuideNative.launch(serviceId, title).
   if (NATIVE && svc.nativeV > NATIVE_V) return toast('Update the OneGuide app to open ' + svc.name + ' from here. For now, open it from your Fire Cube home screen.');
-  if (NATIVE) { let r = ''; try { r = window.OneGuideNative.launch(svc.id, (item && item.title) || ''); } catch (e) { r = 'Could not open ' + svc.name + '.'; } return toast(r || 'Opening ' + svc.name + '...'); }
+  if (NATIVE) { let r = ''; try { r = window.OneGuideNative.launch(svc.id, (item && item.title) || ''); } catch (e) { r = 'Could not open ' + svc.name + '.'; } toast(r || 'Opening ' + svc.name + '...'); closeModal(); return; }   // close the detail sheet so coming back to OneGuide starts one level back, not on the same show
   toast(svc.app ? `A web page can't open apps yet. Open ${svc.app} on your Fire Cube (or hold the mic button and say "Alexa, open Spectrum TV").` : `A web page can't open apps yet. Hold the mic button and say "Alexa, open ${svc.name}".`);
 }
 
@@ -865,7 +865,7 @@ updateClock(); setInterval(updateClock, 20000);
 $('.tab').focus({ preventScroll:true }); show('home');
 if (S.mode === 'live') refreshSoon();
 let lastLoad = Date.now();
-document.addEventListener('visibilitychange', () => { if (!document.hidden && S.mode === 'live' && Date.now() - lastLoad > 5 * 60e3) { lastLoad = Date.now(); refreshSoon(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && modalOpen) closeModal(); if (!document.hidden && S.mode === 'live' && Date.now() - lastLoad > 5 * 60e3) { lastLoad = Date.now(); refreshSoon(); } });
 })();
 </script>
 </body>
